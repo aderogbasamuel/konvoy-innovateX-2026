@@ -1,9 +1,12 @@
+import HeroBackground from "./HeroBackground";
 import TripCard from "./TripCard";
 import { DISPLAY, btn } from "./styles";
 
 export default function Hero() {
   return (
-    <header className="mx-auto max-w-[1120px] px-5 pb-14 pt-5 md:px-8 md:pb-[88px] md:pt-7">
+    <div className="relative overflow-hidden">
+    <HeroBackground />
+    <header className="relative z-10 mx-auto max-w-[1120px] px-5 pb-44 pt-5 md:px-8 md:pb-[88px] md:pt-7">
       <nav aria-label="Main" className="flex min-h-12 items-center justify-between">
         <a href="#" className={`${DISPLAY} flex items-center gap-2 text-2xl font-extrabold tracking-tight`}>
           <i className="inline-block h-3 w-3 rounded-full bg-[#FFC20E]" aria-hidden="true" />
@@ -34,5 +37,6 @@ export default function Hero() {
         <TripCard />
       </div>
     </header>
+    </div>
   );
 }

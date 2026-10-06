@@ -16,7 +16,7 @@ export default function TripCard() {
   return (
     <article
       aria-label="Example of a live trip"
-      className="w-full max-w-[420px] justify-self-center rounded-3xl bg-[#F2F6F1] p-5 text-[#10201A] shadow-[0_24px_48px_rgba(0,0,0,0.28)] md:justify-self-end"
+      className="w-full max-w-[420px] justify-self-center rounded-3xl bg-[#F2F6F1]/70 backdrop-blur-sm p-5 text-[#10201A] shadow-[0_24px_48px_rgba(0,0,0,0.28)] md:justify-self-end"
     >
       <div className="flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-2 rounded-full bg-[#DCEBDD] px-3 py-1.5 text-sm font-semibold text-[#11603A]">

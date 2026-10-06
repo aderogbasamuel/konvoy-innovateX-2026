@@ -157,7 +157,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
       <div className="w-full px-6">
         <button
           type="button"
-          onClick={onGetStarted ?? (() => router.push("/signup"))}
+          onClick={onGetStarted ?? (() => router.push("/home"))}
           className={`${buttonPrimary} w-full`}
         >
           Get Started

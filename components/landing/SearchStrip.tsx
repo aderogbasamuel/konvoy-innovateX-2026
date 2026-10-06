@@ -2,7 +2,7 @@
 
 import { useId, useState, type FormEvent } from "react";
 import { DISPLAY, btn, h2 } from "./styles";
-
+import SearchBackground from "./SearchBackground";
 export interface RideSearch {
   from: string;
   to: string;
@@ -48,8 +48,11 @@ export default function SearchStrip({ onSearch }: { onSearch?: (q: RideSearch) =
   }
 
   return (
-    <section id="book" aria-labelledby="book-heading" className="bg-[#FFC20E] px-5 py-16 text-[#241A00] md:px-8 md:py-24">
-      <div className="mx-auto max-w-[1120px]">
+    // <section id="book" aria-labelledby="book-heading" className="bg-[#FFC20E] px-5 py-16 text-[#241A00] md:px-8 md:py-24">
+<section id="book" aria-labelledby="book-heading"
+  className="relative overflow-hidden bg-[#FFC20E] px-5 pb-44 pt-16 text-[#241A00] md:px-8 md:pb-64 md:pt-24">
+  <SearchBackground />   {/* 3. first child of the section */}
+  <div className="relative mx-auto max-w-[1120px]">   {/* add "relative" here */}
         <h2 id="book-heading" className={`${DISPLAY} ${h2} max-w-[14ch]`}>
           Where are you headed?
         </h2>

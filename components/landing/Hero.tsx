@@ -25,7 +25,7 @@ export default function Hero() {
             <a href="#partner" className="hidden rounded-full px-3 py-2.5 text-[0.95rem] font-medium text-[#1f3327] hover:bg-[#F2F6F1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#0A3B22] md:inline-block">
               For transport companies
             </a>
-            <a href="#book" className="hidden rounded-full bg-[#0A3B22] px-5 py-2.5 text-[0.95rem] font-semibold text-white hover:bg-[#11603A] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[#0A3B22] md:inline-block">
+            <a href="/onboarding" className="hidden rounded-full bg-[#0A3B22] px-5 py-2.5 text-[0.95rem] font-semibold text-white hover:bg-[#11603A] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[#0A3B22] md:inline-block">
               Find a ride
             </a>
           </div>
@@ -40,7 +40,7 @@ export default function Hero() {
               Book a verified ride to camp or your posting state. See which other corpers are travelling your route, and let your family follow the journey live.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <a href="#book" className={`${btn} ${focus} bg-[#FFC20E] text-[#241A00] hover:bg-[#FFD13F]`}>
+              <a href="/onboarding" className={`${btn} ${focus} bg-[#FFC20E] text-[#241A00] hover:bg-[#FFD13F]`}>
                 Find a ride
               </a>
               <a href="#how" className={`${btn} ${focus} border-[1.5px] border-white/35 hover:border-white`}>

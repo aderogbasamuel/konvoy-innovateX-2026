@@ -1,9 +1,9 @@
 import { DISPLAY } from "./styles";
 
 // Fill these in with your real details.
-const CONTACT_EMAIL = "hello@yourdomain.com";
-const WHATSAPP_URL = "https://wa.me/234XXXXXXXXXX";
-
+const CONTACT_EMAIL = "hello@konvoy.com";
+const WHATSAPP_URL = "https://wa.me/2348146998074";
+import Logo from "@/components/Logo";
 interface LinkItem {
   label: string;
   href: string;
@@ -42,9 +42,8 @@ export default function Footer() {
         <div>
           <a
             href="#"
-            className={`${DISPLAY} inline-flex items-center gap-2 rounded text-2xl font-extrabold tracking-tight focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[#FFC20E]`}
+            className={`${DISPLAY} text-white inline-flex items-center gap-2 rounded text-2xl font-extrabold tracking-tight focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[#FFC20E]`}
           >
-            <span className="inline-block h-3 w-3 rounded-full bg-[#FFC20E]" aria-hidden="true" />
             Konvoy
           </a>
           <p className="mt-3 max-w-[32ch] leading-relaxed text-[#8FD1A9]">

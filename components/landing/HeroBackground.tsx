@@ -1,16 +1,16 @@
-import { useId } from "react";
+import { useId, type ReactElement } from "react";
 
 // Decorative hero background: atmospheric hills, contour lines, a shaded road
 // and a loaded-up danfo-style van. Pure SVG, no image requests.
 // Hidden from assistive tech. Same props/usage as before (none).
-export default function HeroBackground() {
+export default function HeroBackground(): ReactElement {
   // Unique ids so gradients/clips don't collide if this renders twice.
-  const uid = useId().replace(/:/g, "");
-  const id = (n) => `${uid}-${n}`;
-  const url = (n) => `url(#${id(n)})`;
+  const uid: string = useId().replace(/:/g, "");
+  const id = (n: string): string => `${uid}-${n}`;
+  const url = (n: string): string => `url(#${id(n)})`;
 
-  const ROAD = "M-60 740 C 260 700, 420 780, 760 730 S 1200 640, 1500 690";
-  const BODY =
+  const ROAD: string = "M-60 740 C 260 700, 420 780, 760 730 S 1200 640, 1500 690";
+  const BODY: string =
     "M4 68 V22 Q4 10 16 10 H116 C126 10 132 14 138 24 L150 40 Q154 44 160 45 L166 47 Q172 49 172 56 V68 Z";
 
   return (

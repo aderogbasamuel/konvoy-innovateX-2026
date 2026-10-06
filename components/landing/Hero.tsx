@@ -1,0 +1,38 @@
+import TripCard from "./TripCard";
+import { DISPLAY, btn } from "./styles";
+
+export default function Hero() {
+  return (
+    <header className="mx-auto max-w-[1120px] px-5 pb-14 pt-5 md:px-8 md:pb-[88px] md:pt-7">
+      <nav aria-label="Main" className="flex min-h-12 items-center justify-between">
+        <a href="#" className={`${DISPLAY} flex items-center gap-2 text-2xl font-extrabold tracking-tight`}>
+          <i className="inline-block h-3 w-3 rounded-full bg-[#FFC20E]" aria-hidden="true" />
+          Konvoy
+        </a>
+        <a href="#how" className="px-1 py-3 text-[0.95rem] font-medium text-[#8FD1A9]">How it works</a>
+      </nav>
+
+      <div className="mt-9 grid gap-10 md:mt-[72px] md:grid-cols-[1.15fr_0.85fr] md:items-center md:gap-16">
+        <div>
+          <h1 className={`${DISPLAY} m-0 max-w-[13ch] text-[clamp(2.4rem,9vw,4.4rem)] font-extrabold leading-[1.02] tracking-[-0.03em]`}>
+            Your trip to camp, with people who have your back.
+          </h1>
+          <p className="mt-5 max-w-[46ch] text-[1.1rem] text-[#D5E8DB]">
+            Book a verified ride to camp or your posting state. See which other corpers are travelling your route, and let your family follow the journey live.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <a href="#book" className={`${btn} bg-[#FFC20E] text-[#241A00] hover:bg-[#FFD13F]`}>Find a ride</a>
+            <a href="#how" className={`${btn} border-[1.5px] border-white/35 hover:border-white`}>See how it works</a>
+          </div>
+          <p className="mt-5 flex max-w-[46ch] items-start gap-2.5 text-[0.92rem] text-[#8FD1A9]">
+            <svg className="mt-0.5 flex-none" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8FD1A9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z" /><path d="M8.5 12l2.5 2.5 4.5-5" />
+            </svg>
+            <span>Every transport company is checked by hand before it is listed.</span>
+          </p>
+        </div>
+        <TripCard />
+      </div>
+    </header>
+  );
+}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type TouchEvent } from "react";
 import Logo from "@/components/Logo";
 import { DISPLAY } from "@/components/landing/styles";
+import { buttonPrimary, buttonSecondary } from "@/components/ui/buttons";
 
 interface Slide {
   title: string;
@@ -42,7 +43,7 @@ interface WelcomeProps {
 }
 
 const focusRing =
-  "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[#8FC3A6]";
+  "focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[#11603A]";
 
 // Every slide sits in the same grid cell and crossfades. The cell is as tall as the
 // tallest slide, so nothing jumps when the text length changes.
@@ -80,7 +81,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
   return (
     <main
       onKeyDown={handleKeyDown}
-      className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center bg-[#F2F6F1] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[#1F3D31]"
+      className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center bg-[#F2F6F1] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[#10201A]"
     >
       <div className="mt-6 flex justify-center">
         <Logo />
@@ -110,7 +111,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
                 >
                   {s.title}
                 </Title>
-                <p className="mx-auto mt-3 max-w-[32ch] text-sm leading-snug text-[#5D6B64]">{s.text}</p>
+                <p className="mx-auto mt-3 max-w-[32ch] text-sm leading-snug text-[#4C5F55]">{s.text}</p>
               </div>
             );
           })}
@@ -146,7 +147,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
           >
             <span
               className={`block h-[7px] rounded-full transition-all motion-reduce:transition-none ${
-                i === active ? "w-5 bg-[#2F6B4F]" : "w-[7px] bg-[#C9D3CD]"
+                i === active ? "w-5 bg-[#0A3B22]" : "w-[7px] bg-[#B7CDBB]"
               }`}
             />
           </button>
@@ -157,14 +158,14 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
         <button
           type="button"
           onClick={onGetStarted ?? (() => router.push("/signup"))}
-          className={`h-[52px] w-full rounded-[14px] border-2 border-[#2F6B4F] bg-[#2F6B4F] text-base font-bold text-white hover:bg-[#245640] ${focusRing}`}
+          className={`${buttonPrimary} w-full`}
         >
           Get Started
         </button>
         <button
           type="button"
           onClick={onSignIn ?? (() => router.push("/signin"))}
-          className={`mt-3 h-[52px] w-full rounded-[14px] border-2 border-[#2F6B4F] bg-white text-base font-semibold text-[#1F3D31] hover:bg-[#EEF5EF] ${focusRing}`}
+          className={`${buttonSecondary} mt-3 w-full`}
         >
           I already have an account
         </button>

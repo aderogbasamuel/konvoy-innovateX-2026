@@ -1,5 +1,5 @@
 // Shared class strings for the landing page.
-export const DISPLAY = "font-[family-name:var(--font-display)]";
+export const DISPLAY = "font-[family-name:var(--font-body)]";
 
 export const btn =
   "inline-flex min-h-[52px] items-center justify-center rounded-[14px] px-6 font-semibold focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-[#FFC20E]";

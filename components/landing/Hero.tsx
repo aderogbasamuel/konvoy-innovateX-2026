@@ -1,3 +1,4 @@
+import Logo from "../Logo";
 import HeroBackground from "./HeroBackground";
 import TripCard from "./TripCard";
 import { DISPLAY, btn } from "./styles";
@@ -11,10 +12,11 @@ export default function Hero() {
       <HeroBackground />
 
       <header className="relative z-10 mx-auto max-w-[1120px] px-5 pb-44 pt-5 text-white md:px-8 md:pb-[88px] md:pt-7">
-        <nav aria-label="Main" className="flex min-h-14 items-center justify-between rounded-full bg-white py-1.5 pl-5 pr-2 text-black shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
+        <nav aria-label="Main" className="flex min-h-14 items-center justify-between rounded-full bg-white/90 py-1.5 pl-5 pr-2 text-black shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
           <a href="#" className={`${DISPLAY} flex items-center gap-2 rounded-full text-2xl font-extrabold tracking-tight focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[#0A3B22]`}>
-            <span className="inline-block h-3 w-3 rounded-full bg-[#FFC20E]" aria-hidden="true" />
-            Konvoy
+            {/* <span className="inline-block h-3 w-3 rounded-full bg-[#FFC20E]" aria-hidden="true" /> */}
+            <Logo/>
+            {/* Konvoy */}
           </a>
           <div className="flex items-center gap-1 md:gap-2">
             <a href="#how" className="rounded-full px-3 py-2.5 text-[0.95rem] font-medium text-[#1f3327] hover:bg-[#F2F6F1] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#0A3B22]">

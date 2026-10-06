@@ -9,14 +9,18 @@ import { DISPLAY } from "@/components/landing/styles";
 import { STATES } from "@/lib/states";
 import { BUDDIES, TRIPS, type Buddy } from "@/lib/mock";
 
-const QUICK_QUESTIONS = ["Where do I register at camp?", "What should I pack?", "Where can I stay nearby?"];
+const QUICK_QUESTIONS: string[] = ["Where do I register at camp?", "What should I pack?", "Where can I stay nearby?"];
 
-function BuddyCard({ buddy }: { buddy: Buddy }) {
-  const [open, setOpen] = useState(false);
-  const [message, setMessage] = useState("");
-  const [sent, setSent] = useState(false);
+interface BuddyCardProps {
+  buddy: Buddy;
+}
 
-  function send(e: FormEvent) {
+function BuddyCard({ buddy }: BuddyCardProps) {
+  const [open, setOpen] = useState<boolean>(false);
+  const [message, setMessage] = useState<string>("");
+  const [sent, setSent] = useState<boolean>(false);
+
+  function send(e: FormEvent<HTMLFormElement>): void {
     e.preventDefault();
     if (!message.trim()) return;
     // TODO: POST /buddies/{id}/conversations { message }. The API returns whatsappUrl after contact starts.

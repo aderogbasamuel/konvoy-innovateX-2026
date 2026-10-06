@@ -9,10 +9,11 @@ interface ScreenHeaderProps {
   title: string;
   subtitle?: string;
   children?: ReactNode;
+  showBack?: boolean;
 }
 
 // Deep green band with a back button, used at the top of sub-screens
-export default function ScreenHeader({ title, subtitle, children }: ScreenHeaderProps) {
+export default function ScreenHeader({ title, subtitle, children, showBack }: ScreenHeaderProps) {
   const router = useRouter();
   return (
     <div className="bg-[#0A3B22] px-5 pb-16 pt-[max(1.25rem,env(safe-area-inset-top))] text-white">

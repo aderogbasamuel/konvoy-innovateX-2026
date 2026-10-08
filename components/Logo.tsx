@@ -1,26 +1,43 @@
-export default function Logo() {
+import Image from "next/image";
+
+type Variant = "wordmark" | "mark" | "full";
+type Tone = "dark" | "light";
+
+// Files live in public/brand. Sizes are the real pixel sizes so the browser can reserve space.
+const ASSETS = {
+  wordmark: {
+    dark: { src: "/brand/logo-wordmark.png", width: 1200, height: 158 },
+    light: { src: "/brand/logo-wordmark-white.png", width: 1200, height: 158 },
+  },
+  mark: { src: "/brand/logo-mark.png", width: 1200, height: 614 },
+  full: { src: "/brand/logo-full.png", width: 1600, height: 1042 },
+} as const;
+
+const SIZE: Record<Variant, string> = {
+  wordmark: "h-7 w-auto",
+  mark: "h-12 w-auto",
+  full: "h-auto w-64 max-w-full",
+};
+
+interface LogoProps {
+  /** wordmark: KONVOY text (default). mark: the bus alone. full: bus, wordmark and tagline. */
+  variant?: Variant;
+  /** dark for light backgrounds (default), light for dark green backgrounds. Only affects the wordmark. */
+  tone?: Tone;
+  className?: string;
+  priority?: boolean;
+}
+
+export default function Logo({ variant = "wordmark", tone = "dark", className = "", priority = false }: LogoProps) {
+  const asset = variant === "wordmark" ? ASSETS.wordmark[tone] : ASSETS[variant];
   return (
-    <div className="flex items-center gap-2.5">
-      <svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true">
-        <path d="M17 1 31 6v13c0 9-6 15-14 18C9 34 3 28 3 19V6z" fill="#2f6b4f" />
-        {/* Road: wide at the bottom, bending away to the horizon */}
-        <path
-          d="M11 31C11 24 16.5 22 17 17C17.4 13.5 18.3 11.5 18.6 9H21C21.2 11.5 21.6 13.5 22.2 17C23 22 25 25 25 31Z"
-          fill="#fff"
-        />
-        {/* Centre line */}
-        <path
-          d="M18 30C18 25 20.2 23 20 18C19.8 15 19.8 13 19.8 11"
-          fill="none"
-          stroke="#2f6b4f"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeDasharray="2.4 2.2"
-        />
-      </svg>
-      <span className="font-[family-name:var(--font-display)] text-2xl font-extrabold tracking-tight text-[#10201A]">
-        Konvoy
-      </span>
-    </div>
+    <Image
+      src={asset.src}
+      width={asset.width}
+      height={asset.height}
+      alt="Konvoy"
+      priority={priority}
+      className={`${SIZE[variant]} ${className}`}
+    />
   );
 }

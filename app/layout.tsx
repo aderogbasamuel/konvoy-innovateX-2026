@@ -16,8 +16,8 @@ const body = Plus_Jakarta_Sans({
   variable: "--font-body",
 });
 
+
 export const metadata: Metadata = {
-  icons: { apple: "/icons/apple-touch-icon.png" },
   title: "Konvoy: safe rides for NYSC corpers",
   description:
     "Book a verified ride to camp or your posting state, travel with other corpers, and let your family follow the trip live.",
@@ -29,6 +29,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   themeColor: "#0A3B22",
 };
+
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

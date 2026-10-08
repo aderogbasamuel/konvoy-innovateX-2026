@@ -44,6 +44,15 @@ class Config:
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
     RATELIMIT_ENABLED = True
 
+    # Bachs payments (docs.bachs.io). sk_sandbox_... / sk_live_... picks the
+    # environment automatically — see app/services/bachs.py.
+    BACHS_SECRET_KEY = os.getenv("BACHS_SECRET_KEY", "")
+    
+    # Public https URL of the frontend. Bachs rejects localhost for success/cancel
+    # redirects, so this must be a real deployed URL even during local dev.
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "")
+    BACHS_WEBHOOK_SECRET = os.getenv("BACHS_WEBHOOK_SECRET", "")
+
 
 class TestConfig(Config):
     TESTING = True
@@ -53,3 +62,5 @@ class TestConfig(Config):
     SMS_PROVIDER = "console"
     OTP_RESEND_COOLDOWN_SECONDS = 0
     RATELIMIT_ENABLED = False
+    BACHS_SECRET_KEY = "sk_sandbox_test"
+    BACHS_WEBHOOK_SECRET = "whsec_test"

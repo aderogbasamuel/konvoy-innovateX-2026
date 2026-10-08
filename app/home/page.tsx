@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useId, useState, useTransition, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useState,
+  useTransition,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpDown, Bell, Calendar, MapPin, ShieldCheck } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { DISPLAY } from "@/components/landing/styles";
-
+import { useAuth } from "@/context/AuthContext";
 /* ---------- helpers ---------- */
 
 function greeting(date = new Date()) {
@@ -28,10 +35,43 @@ function formatDate(iso: string) {
 // Suggestions only: people can still type any city or town.
 // Worth moving to a shared file (e.g. lib/places.ts) so the landing search can reuse it.
 const PLACES = [
-  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", "Cross River",
-  "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT Abuja", "Gombe", "Imo", "Jigawa", "Kaduna", "Kano",
-  "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo",
-  "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "FCT Abuja",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
 ];
 
 /* ---------- trip field row ---------- */
@@ -50,11 +90,17 @@ function Row({ icon, label, children, action }: RowProps) {
       <label className="relative flex min-h-[72px] items-center gap-4 px-4 py-3 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#11603A]">
         <span className="text-[#11603A]">{icon}</span>
         <span className="flex-1">
-          <span className="block text-xs font-medium text-[#4C5F55]">{label}</span>
+          <span className="block text-xs font-medium text-[#4C5F55]">
+            {label}
+          </span>
           {children}
         </span>
       </label>
-      {action && <div className="absolute bottom-0 right-4 z-10 translate-y-1/2">{action}</div>}
+      {action && (
+        <div className="absolute bottom-0 right-4 z-10 translate-y-1/2">
+          {action}
+        </div>
+      )}
     </div>
   );
 }
@@ -67,7 +113,9 @@ const inputClass =
 export default function HomePage() {
   const router = useRouter();
   const placesId = useId();
-  const name = "Samuel"; // replace with the signed-in user's first name
+  const { user, loading } = useAuth();
+
+  const name = user?.full_name?.trim().split(/\s+/)[0] || "Traveler"; // replace with the signed-in user's first name
 
   // These depend on the device clock, so set them after mount to avoid a hydration mismatch
   const [hello, setHello] = useState("Hello");
@@ -97,7 +145,11 @@ export default function HomePage() {
       return;
     }
     setError("");
-    const params = new URLSearchParams({ from: from.trim(), to: to.trim(), date });
+    const params = new URLSearchParams({
+      from: from.trim(),
+      to: to.trim(),
+      date,
+    });
     startTransition(() => router.push(`/rides?${params.toString()}`));
   }
 
@@ -123,8 +175,19 @@ export default function HomePage() {
 
         <header className="relative mx-auto flex max-w-md items-start justify-between">
           <div>
-            <h1 className={`${DISPLAY} m-0 text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em]`}>
-              {hello}, {name}
+            <h1
+              className={`${DISPLAY} m-0 text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em]`}
+              aria-live="polite"
+            >
+              {hello},{" "}
+              {loading ? (
+                <span
+                  className="inline-block h-7 w-24 animate-pulse rounded-md bg-white/20 align-middle"
+                  aria-label="Loading your name"
+                />
+              ) : (
+                name
+              )}
             </h1>
             <p className="mt-1 text-[#8FD1A9]">Where are you heading today?</p>
           </div>
@@ -170,7 +233,10 @@ export default function HomePage() {
               />
             </Row>
 
-            <Row icon={<MapPin className="h-5 w-5" aria-hidden="true" />} label="Going to">
+            <Row
+              icon={<MapPin className="h-5 w-5" aria-hidden="true" />}
+              label="Going to"
+            >
               <input
                 type="text"
                 list={placesId}
@@ -184,8 +250,14 @@ export default function HomePage() {
               />
             </Row>
 
-            <Row icon={<Calendar className="h-5 w-5" aria-hidden="true" />} label="Travel date">
-              <span aria-hidden="true" className={`block text-base ${date ? "font-semibold" : "text-[#6B7D72]"}`}>
+            <Row
+              icon={<Calendar className="h-5 w-5" aria-hidden="true" />}
+              label="Travel date"
+            >
+              <span
+                aria-hidden="true"
+                className={`block text-base ${date ? "font-semibold" : "text-[#6B7D72]"}`}
+              >
                 {formatDate(date)}
               </span>
               {/* Native date picker sits invisibly over the row. showPicker() makes a tap anywhere on the row open it on desktop too. */}
@@ -196,7 +268,11 @@ export default function HomePage() {
                 onChange={(e) => setDate(e.target.value)}
                 onClick={(e) => {
                   try {
-                    (e.currentTarget as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
+                    (
+                      e.currentTarget as HTMLInputElement & {
+                        showPicker?: () => void;
+                      }
+                    ).showPicker?.();
                   } catch {
                     /* some browsers only allow it from a direct tap; the native control still works */
                   }
@@ -214,7 +290,10 @@ export default function HomePage() {
           </datalist>
 
           {error && (
-            <p role="alert" className="mt-3 px-1 text-sm font-semibold text-[#B3261E]">
+            <p
+              role="alert"
+              className="mt-3 px-1 text-sm font-semibold text-[#B3261E]"
+            >
               {error}
             </p>
           )}
@@ -236,8 +315,12 @@ export default function HomePage() {
             <ShieldCheck className="h-6 w-6" aria-hidden="true" />
           </span>
           <div>
-            <p className={`${DISPLAY} m-0 font-semibold text-[#0A3B22]`}>Safe. Verified. Supported.</p>
-            <p className="m-0 text-sm text-[#4C5F55]">Your safety comes first, from booking to arrival.</p>
+            <p className={`${DISPLAY} m-0 font-semibold text-[#0A3B22]`}>
+              Safe. Verified. Supported.
+            </p>
+            <p className="m-0 text-sm text-[#4C5F55]">
+              Your safety comes first, from booking to arrival.
+            </p>
           </div>
         </div>
       </div>

@@ -81,9 +81,9 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
   return (
     <main
       onKeyDown={handleKeyDown}
-      className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center bg-[#F2F6F1] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[#10201A]"
+      className="mx-auto flex h-dvh w-full max-w-md flex-col items-center bg-[#F2F6F1] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[#10201A]"
     >
-      <div className="mt-6 flex justify-center">
+      <div className=" mt-4 sm:mt-6 flex justify-center">
         <Logo />
       </div>
 
@@ -97,7 +97,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
           {`Slide ${active + 1} of ${slides.length}: ${slides[active].title.replace("\n", " ")}`}
         </p>
 
-        <div className="mt-6 grid px-6">
+        <div className="mt-4 grid px-6">
           {slides.map((s, i) => {
             const Title = i === active ? "h1" : "div"; // one h1 in the accessibility tree
             return (
@@ -118,7 +118,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
         </div>
 
         {/* Full-width scene, sits at the bottom like the design */}
-        <div className="grid flex-1 items-end justify-items-center pt-4">
+        <div className="grid flex-1 items-end justify-items-center">
           {slides.map((s, i) => (
             <Image
               key={s.image}
@@ -135,7 +135,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
         </div>
       </div>
 
-      <div className="mb-5 mt-3 flex justify-center gap-1" role="group" aria-label="Onboarding slides">
+      <div className="mb-5 flex justify-center gap-1" role="group" aria-label="Onboarding slides">
         {slides.map((s, i) => (
           <button
             key={s.image}
@@ -158,14 +158,14 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
         <button
           type="button"
           onClick={onGetStarted ?? (() => router.push("/signup"))}
-          className={`${buttonPrimary} w-full`}
+          className={`${buttonPrimary} w-full rounded-full`}
         >
           Get Started
         </button>
         <button
           type="button"
           onClick={onSignIn ?? (() => router.push("/signin"))}
-          className={`${buttonSecondary} mt-3 w-full`}
+          className="mt-2 underline text-sm text-[#0A3B22] hover:text-[#11603A] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[#11603A] font-medium"
         >
           I already have an account
         </button>

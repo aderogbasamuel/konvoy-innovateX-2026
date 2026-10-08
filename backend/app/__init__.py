@@ -10,7 +10,21 @@ from .extensions import db, jwt, limiter, migrate
 
 def create_app(config_object=Config) -> Flask:
     app = Flask(__name__)
+
     app.config.from_object(config_object)
+
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": [
+                    "http://localhost:3000",
+                    "https://konvoyapp.vercel.app",
+                ],
+            }
+        },
+        supports_credentials=True,
+    )
 
     if app.config["BEHIND_PROXY"]:
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
@@ -19,12 +33,12 @@ def create_app(config_object=Config) -> Flask:
     migrate.init_app(app, db)
     jwt.init_app(app)
     limiter.init_app(app)
-    CORS(app, origins=app.config["CORS_ORIGINS"])
 
-    from . import models  # noqa: F401  (registers models for migrations)
+    from . import models  # noqa: F401
     from .api import api_bp
 
     app.register_blueprint(api_bp, url_prefix="/api")
+
     register_error_handlers(app)
     register_cli(app)
 

@@ -62,3 +62,44 @@ export const BUDDIES: Buddy[] = [
   { id: "b4", firstName: "Tunde", state: "Oyo", bio: "Serving in Ibadan. Can help with the camp journey and accommodation.", languages: ["English", "Yoruba"], whatsapp: "2348000000004" },
   { id: "b5", firstName: "Ngozi", state: "Lagos", bio: "Serving in Lagos Mainland. Ask me about getting around and PPA hunting.", languages: ["English", "Igbo"], whatsapp: "2348000000005" },
 ];
+
+export interface VerificationItem {
+  label: string;
+  detail: string;
+  verified: boolean;
+}
+
+export const VERIFICATION: VerificationItem[] = [
+  { label: "Operating licence", detail: "Checked 12 Sep 2026, valid to 11 Sep 2027", verified: true },
+  { label: "Vehicle inspection", detail: "Checked 12 Sep 2026, valid to 11 Mar 2027", verified: true },
+  { label: "Driver ID", detail: "Checked 12 Sep 2026", verified: true },
+];
+
+export interface Review {
+  id: string;
+  name: string;
+  rating: number;
+  text: string;
+  date: string; // YYYY-MM-DD
+}
+
+export const REVIEWS: Review[] = [
+  { id: "r1", name: "Amina", rating: 5, text: "Left on time and the driver was careful with my luggage.", date: "2026-09-02" },
+  { id: "r2", name: "Chidi", rating: 4, text: "Comfortable bus. Arrived about 40 minutes later than planned because of traffic.", date: "2026-08-19" },
+  { id: "r3", name: "Tobi", rating: 5, text: "Felt safe the whole way, and my family could follow the trip.", date: "2026-07-30" },
+];
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string;
+  time: string;
+  read: boolean;
+}
+
+export const NOTIFICATIONS: AppNotification[] = [
+  { id: "n1", title: "Trip reminder", body: "Your trip to Kaduna is on 27 Oct. Check your seat and share your tracking link.", time: "2 hours ago", read: false },
+  { id: "n2", title: "Payment received", body: "Your payment to Greenline Travels went through.", time: "Yesterday", read: false },
+  { id: "n3", title: "New message in your squad", body: "Chidi: Meeting at 5:30 am so we do not rush.", time: "2 days ago", read: true },
+  { id: "n4", title: "Zainab replied", body: "Your State Buddy answered your question.", time: "3 days ago", read: true },
+];

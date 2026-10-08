@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -9,7 +10,8 @@ import {
 } from "react";
 
 import { API_BASE, ENDPOINTS, request } from "../app/api/client";
-type User = {
+
+export type User = {
   id?: string | number;
   phone?: string;
   full_name?: string;
@@ -18,13 +20,30 @@ type User = {
   [key: string]: unknown;
 };
 
+type ApiResponse = {
+  message?: string;
+  expires_in?: number;
+  access_token?: string;
+  refresh_token?: string;
+  is_new_user?: boolean;
+  user?: User;
+  [key: string]: unknown;
+};
+
+export type VerifyOtpResult = ApiResponse & {
+  access_token: string;
+  refresh_token: string;
+  is_new_user: boolean;
+  user: User;
+};
+
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  requestOtp: (phone: string) => Promise<unknown>;
-  verifyOtp: (phone: string, code: string) => Promise<unknown>;
-  refreshToken: () => Promise<unknown>;
-  updateUser: (updatedFields: Partial<User>) => Promise<unknown>;
+  requestOtp: (phone: string) => Promise<ApiResponse>;
+  verifyOtp: (phone: string, code: string) => Promise<VerifyOtpResult>;
+  refreshToken: () => Promise<ApiResponse>;
+  updateUser: (updatedFields: Partial<User>) => Promise<ApiResponse>;
   logout: () => void;
 };
 
@@ -38,167 +57,200 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Get the stored access token
   const getAccessToken = () => {
+    if (typeof window === "undefined") return null;
     return localStorage.getItem("konvoy_access_token");
   };
 
-  // Check existing session when app loads
+  // Restore the existing session when the app loads.
   useEffect(() => {
-    const checkSession = async () => {
-      const token = getAccessToken();
+    let cancelled = false;
 
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
+    async function checkSession() {
       try {
-        const data = await request(ENDPOINTS.getUser(API_BASE), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const token = getAccessToken();
 
-        setUser(data.user || data);
-      } catch (error) {
-        console.error("Session check failed:", error);
+        if (!token) return;
 
-        // Access token may have expired.
-        // Try refreshing it.
         try {
-          const refreshToken = localStorage.getItem("konvoy_refresh_token");
-
-          if (!refreshToken) {
-            throw new Error("No refresh token");
-          }
-
-          const refreshData = await request(ENDPOINTS.refresh(API_BASE), {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${refreshToken}`,
-            },
-          });
-
-          localStorage.setItem(
-            "konvoy_access_token",
-            refreshData.access_token
+          const data: ApiResponse = await request(
+            ENDPOINTS.getUser(API_BASE),
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
 
-          const meData = await request(ENDPOINTS.getUser(API_BASE), {
+          if (!cancelled) {
+            setUser(data.user ?? null);
+          }
+
+          return;
+        } catch (error) {
+          console.warn("Access token check failed; trying refresh.", error);
+        }
+
+        const storedRefreshToken = localStorage.getItem(
+          "konvoy_refresh_token"
+        );
+
+        if (!storedRefreshToken) {
+          throw new Error("No refresh token available");
+        }
+
+        const refreshData: ApiResponse = await request(
+          ENDPOINTS.refresh(API_BASE),
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${storedRefreshToken}`,
+            },
+          }
+        );
+
+        if (!refreshData.access_token) {
+          throw new Error("Refresh response did not include an access token");
+        }
+
+        localStorage.setItem(
+          "konvoy_access_token",
+          refreshData.access_token
+        );
+
+        const meData: ApiResponse = await request(
+          ENDPOINTS.getUser(API_BASE),
+          {
             headers: {
               Authorization: `Bearer ${refreshData.access_token}`,
             },
-          });
+          }
+        );
 
-          setUser(meData.user || meData);
-        } catch (refreshError) {
-          console.error("Token refresh failed:", refreshError);
+        if (!cancelled) {
+          setUser(meData.user ?? null);
+        }
+      } catch (error) {
+        console.error("Session restoration failed:", error);
 
-          localStorage.removeItem("konvoy_access_token");
-          localStorage.removeItem("konvoy_refresh_token");
+        localStorage.removeItem("konvoy_access_token");
+        localStorage.removeItem("konvoy_refresh_token");
+
+        if (!cancelled) {
           setUser(null);
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-    };
+    }
 
-    checkSession();
+    void checkSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Request OTP
-  const requestOtp = async (phone: string) => {
-    const data = await request(ENDPOINTS.requestOtp(API_BASE), {
+  // Request a verification code.
+  const requestOtp = async (phone: string): Promise<ApiResponse> => {
+    return request(ENDPOINTS.requestOtp(API_BASE), {
       method: "POST",
-      body: JSON.stringify({
-        phone,
-      }),
+      body: JSON.stringify({ phone }),
     });
-
-    return data;
   };
 
-  // Verify OTP and log the user in
-  const verifyOtp = async (phone: string, code: string) => {
-    const data = await request(ENDPOINTS.verifyOtp(API_BASE), {
-      method: "POST",
-      body: JSON.stringify({
-        phone,
-        code,
-      }),
-    });
+  // Verify the code, store tokens, and return is_new_user to the UI.
+  const verifyOtp = async (
+    phone: string,
+    code: string
+  ): Promise<VerifyOtpResult> => {
+    const data: ApiResponse = await request(
+      ENDPOINTS.verifyOtp(API_BASE),
+      {
+        method: "POST",
+        body: JSON.stringify({ phone, code }),
+      }
+    );
 
-    if (data.access_token) {
-      localStorage.setItem(
-        "konvoy_access_token",
-        data.access_token
-      );
+    if (!data.access_token || !data.refresh_token || !data.user) {
+      throw new Error("The server returned an incomplete login response.");
     }
 
-    if (data.refresh_token) {
-      localStorage.setItem(
-        "konvoy_refresh_token",
-        data.refresh_token
-      );
-    }
+    localStorage.setItem("konvoy_access_token", data.access_token);
+    localStorage.setItem("konvoy_refresh_token", data.refresh_token);
 
-    setUser(data.user || null);
+    setUser(data.user);
 
-    return data;
+    return {
+      ...data,
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      user: data.user,
+      is_new_user: data.is_new_user === true,
+    };
   };
 
-  // Get a new access token using the refresh token
-  const refreshToken = async () => {
-    const token = localStorage.getItem("konvoy_refresh_token");
+  // Get a new access token using the refresh token.
+  const refreshToken = async (): Promise<ApiResponse> => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("konvoy_refresh_token")
+        : null;
 
     if (!token) {
       throw new Error("No refresh token available");
     }
 
-    const data = await request(ENDPOINTS.refresh(API_BASE), {
+    const data: ApiResponse = await request(ENDPOINTS.refresh(API_BASE), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
-    localStorage.setItem(
-      "konvoy_access_token",
-      data.access_token
-    );
+    if (!data.access_token) {
+      throw new Error("The server did not return an access token.");
+    }
+
+    localStorage.setItem("konvoy_access_token", data.access_token);
 
     return data;
   };
 
-  // Update current user
-  const updateUser = async (updatedFields: Partial<User>) => {
+  // Update the current user's profile.
+  const updateUser = async (
+    updatedFields: Partial<User>
+  ): Promise<ApiResponse> => {
     const token = getAccessToken();
 
     if (!token) {
       throw new Error("Not authenticated");
     }
 
-    const data = await request(ENDPOINTS.updateUser(API_BASE), {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(updatedFields),
-    });
+    const data: ApiResponse = await request(
+      ENDPOINTS.updateUser(API_BASE),
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedFields),
+      }
+    );
 
-    const updatedUser = data.user || data;
+    const updatedUser = data.user ?? data;
 
-    setUser(updatedUser);
+    setUser(updatedUser as User);
 
     return data;
   };
 
-  // Logout
+  // Log out locally.
   const logout = () => {
     localStorage.removeItem("konvoy_access_token");
     localStorage.removeItem("konvoy_refresh_token");
-
     setUser(null);
   };
 

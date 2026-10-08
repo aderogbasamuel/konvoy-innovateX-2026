@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -6,13 +7,12 @@ import { useRouter } from "next/navigation";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { useAuth } from "@/context/AuthContext";
 
-type Step = "phone" | "code";
+type Step = "phone" | "code" | "name";
 
 interface PhoneAuthProps {
   mode: "signup" | "signin";
 }
 
-// Nigerian mobile numbers: 0801 234 5678 or 801 234 5678
 const PHONE_RE = /^0?[789][01]\d{8}$/;
 
 const input =
@@ -23,12 +23,12 @@ const primary =
 
 export default function PhoneAuth({ mode }: PhoneAuthProps) {
   const router = useRouter();
-
-  const { requestOtp, verifyOtp } = useAuth();
+  const { requestOtp, verifyOtp, updateUser } = useAuth();
 
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState("");
   const [seconds, setSeconds] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -39,20 +39,18 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
   useEffect(() => {
     if (seconds <= 0) return;
 
-    const t = setTimeout(() => {
-      setSeconds((s) => s - 1);
+    const timer = setTimeout(() => {
+      setSeconds((current) => current - 1);
     }, 1000);
 
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [seconds]);
 
   async function sendCode(e: FormEvent) {
     e.preventDefault();
 
     if (!PHONE_RE.test(digits)) {
-      setError(
-        "Enter a valid Nigerian phone number, like 0801 234 5678."
-      );
+      setError("Enter a valid Nigerian phone number, like 0801 234 5678.");
       return;
     }
 
@@ -61,9 +59,8 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
 
     try {
       await requestOtp(digits);
-
       setStep("code");
-      setSeconds(30);
+      setSeconds(60);
     } catch (err) {
       setError(
         err instanceof Error
@@ -78,7 +75,7 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
   async function verify(e: FormEvent) {
     e.preventDefault();
 
-    if (code.length !== 6) {
+    if (!/^\d{6}$/.test(code)) {
       setError("Enter the 6-digit code we sent you.");
       return;
     }
@@ -87,14 +84,47 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
     setLoading(true);
 
     try {
-      await verifyOtp(digits, code);
+      const result = (await verifyOtp(digits, code)) as {
+        is_new_user: boolean;
+      };
 
-      router.push("/home");
+      if (result.is_new_user) {
+        setStep("name");
+      } else {
+        router.replace("/home");
+      }
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : "Invalid verification code."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveName(e: FormEvent) {
+    e.preventDefault();
+
+    const name = fullName.trim();
+
+    if (name.length < 2 || name.length > 120) {
+      setError("Your name must be between 2 and 120 characters.");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+
+    try {
+      await updateUser({ full_name: name });
+      router.replace("/home");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to save your name. Please try again."
       );
     } finally {
       setLoading(false);
@@ -109,7 +139,7 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
 
     try {
       await requestOtp(digits);
-      setSeconds(30);
+      setSeconds(60);
     } catch (err) {
       setError(
         err instanceof Error
@@ -123,20 +153,27 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
 
   const isSignup = mode === "signup";
 
+  const title =
+    step === "name"
+      ? "Let's get to know you"
+      : isSignup
+        ? "Create your account"
+        : "Welcome back";
+
+  const subtitle =
+    step === "phone"
+      ? "We will text you a code to verify your number."
+      : step === "code"
+        ? `Enter the code we sent to ${display}.`
+        : "What should we call you? Add your name to finish setting up your account.";
+
   return (
     <main className="min-h-dvh bg-[#F2F6F1] font-[family-name:var(--font-body)] text-[#10201A]">
-      <ScreenHeader
-        title={isSignup ? "Create your account" : "Welcome back"}
-        subtitle={
-          step === "phone"
-            ? "We will text you a code to verify your number."
-            : `Enter the code we sent to ${display}.`
-        }
-      />
+      <ScreenHeader title={title} subtitle={subtitle} />
 
       <div className="mx-auto -mt-10 max-w-md px-5 pb-10">
         <div className="rounded-3xl bg-white p-5 shadow-[0_16px_32px_rgba(10,59,34,0.14)]">
-          {step === "phone" ? (
+          {step === "phone" && (
             <form onSubmit={sendCode} noValidate>
               <label className="grid gap-1.5 text-sm font-semibold">
                 Phone number
@@ -164,23 +201,18 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
               </label>
 
               {error && (
-                <p
-                  role="alert"
-                  className="m-0 mt-2 text-sm font-semibold text-[#9B1C12]"
-                >
+                <p role="alert" className="m-0 mt-2 text-sm font-semibold text-[#9B1C12]">
                   {error}
                 </p>
               )}
 
-              <button
-                type="submit"
-                className={primary}
-                disabled={loading}
-              >
+              <button type="submit" className={primary} disabled={loading}>
                 {loading ? "Sending code..." : "Send code"}
               </button>
             </form>
-          ) : (
+          )}
+
+          {step === "code" && (
             <form onSubmit={verify} noValidate>
               <label className="grid gap-1.5 text-sm font-semibold">
                 6-digit code
@@ -202,19 +234,12 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
               </label>
 
               {error && (
-                <p
-                  role="alert"
-                  className="m-0 mt-2 text-sm font-semibold text-[#9B1C12]"
-                >
+                <p role="alert" className="m-0 mt-2 text-sm font-semibold text-[#9B1C12]">
                   {error}
                 </p>
               )}
 
-              <button
-                type="submit"
-                className={primary}
-                disabled={loading}
-              >
+              <button type="submit" className={primary} disabled={loading}>
                 {loading ? "Verifying..." : "Verify and continue"}
               </button>
 
@@ -247,31 +272,59 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
               </div>
             </form>
           )}
+
+          {step === "name" && (
+            <form onSubmit={saveName} noValidate>
+              <label className="grid gap-1.5 text-sm font-semibold">
+                Full name
+
+                <input
+                  type="text"
+                  autoComplete="name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                  minLength={2}
+                  maxLength={120}
+                  aria-invalid={!!error}
+                  className={input}
+                  disabled={loading}
+                  autoFocus
+                />
+              </label>
+
+              {error && (
+                <p role="alert" className="m-0 mt-2 text-sm font-semibold text-[#9B1C12]">
+                  {error}
+                </p>
+              )}
+
+              <button type="submit" className={primary} disabled={loading}>
+                {loading ? "Saving your details..." : "Finish setup"}
+              </button>
+            </form>
+          )}
         </div>
 
-        <p className="mt-6 text-center text-sm text-[#4C5F55]">
-          {isSignup ? (
-            <>
-              Already have an account?{" "}
-              <Link
-                href="/signin"
-                className="font-semibold text-[#11603A] underline"
-              >
-                Sign in
-              </Link>
-            </>
-          ) : (
-            <>
-              New to Konvoy?{" "}
-              <Link
-                href="/signup"
-                className="font-semibold text-[#11603A] underline"
-              >
-                Create an account
-              </Link>
-            </>
-          )}
-        </p>
+        {step !== "name" && (
+          <p className="mt-6 text-center text-sm text-[#4C5F55]">
+            {isSignup ? (
+              <>
+                Already have an account?{" "}
+                <Link href="/signin" className="font-semibold text-[#11603A] underline">
+                  Sign in
+                </Link>
+              </>
+            ) : (
+              <>
+                New to Konvoy?{" "}
+                <Link href="/signup" className="font-semibold text-[#11603A] underline">
+                  Create an account
+                </Link>
+              </>
+            )}
+          </p>
+        )}
       </div>
     </main>
   );

@@ -14,7 +14,7 @@ const ASSETS = {
 } as const;
 
 const SIZE: Record<Variant, string> = {
-  wordmark: "h-7 w-auto",
+  wordmark: "h-5 sm:h-7 w-auto",
   mark: "h-12 w-auto",
   full: "h-auto w-64 max-w-full",
 };

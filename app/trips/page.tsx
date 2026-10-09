@@ -7,7 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { DISPLAY } from "@/components/landing/styles";
 import { formatTripDate, naira } from "@/lib/format";
-import { getBookings } from "@/lib/booking";
+import { getBookings } from "@/lib/bookings";
 import { getRide, type TransportRide } from "@/lib/rides-api";
 
 type Tab = "upcoming" | "past";

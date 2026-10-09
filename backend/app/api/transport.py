@@ -5,7 +5,7 @@ from sqlalchemy import func
 
 from ..extensions import db
 from ..models.transport import Operator, Ride, Route
-from ..utils.admin import admin_required  # change if your decorator file has another name
+from ..utils.auth import admin_required  # change if your decorator file has another name
 from . import api_bp
 
 

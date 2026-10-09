@@ -13,11 +13,15 @@ interface RideCardProps {
 export default function RideCard({ ride, onBook }: RideCardProps) {
   const departure = new Date(ride.departsAt);
 
+  const operator = ride.operator as unknown;
   const operatorName =
-    typeof ride.operator === "string"
-      ? ride.operator
-      : typeof ride.operator === "object" && ride.operator && "name" in ride.operator
-        ? ride.operator.name
+    typeof operator === "string"
+      ? operator
+      : typeof operator === "object" &&
+          operator !== null &&
+          "name" in operator &&
+          typeof (operator as { name?: unknown }).name === "string"
+        ? (operator as { name: string }).name
         : "K";
 
   const departureDate = departure.toLocaleDateString("en-NG", {

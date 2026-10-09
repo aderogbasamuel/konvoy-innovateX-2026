@@ -180,7 +180,7 @@ function Rides() {
           sortedRides.map((ride) => (
             <RideCard
               key={ride.id}
-              ride={ride}
+              ride={ride as unknown as Parameters<typeof RideCard>[0]["ride"]}
               onBook={() => router.push(`/rides/${ride.id}?${tripQuery}`)}
               onViewSquad={() =>
                 router.push(`/squad?ride=${ride.id}&${tripQuery}`)

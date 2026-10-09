@@ -81,7 +81,7 @@ function RideDetails() {
         <div className="mx-auto flex max-w-md items-center gap-4">
           <p className={`${DISPLAY} m-0 text-xl font-extrabold tracking-tight`}>{naira(ride.price)}</p>
           <Link
-            href={`/book/${ride.id}${query ? `?${query}` : ""}`}
+            href={`/bookings/${ride.id}${query ? `?${query}` : ""}`}
             className="ml-auto flex min-h-[52px] flex-1 items-center justify-center rounded-[14px] bg-[#FFC20E] font-semibold text-[#241A00] hover:bg-[#FFD13F] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-[#0A3B22]"
           >
             Book this ride

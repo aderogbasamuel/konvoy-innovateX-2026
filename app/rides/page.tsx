@@ -90,7 +90,7 @@ function Rides() {
           <RideCard
             key={ride.id}
             ride={ride}
-            onBook={() => router.push(`/book/${ride.id}?${tripQuery}`)}
+            onBook={() => router.push(`/bookings/${ride.id}?${tripQuery}`)}
             onViewSquad={() => router.push(`/squad?ride=${ride.id}&${tripQuery}`)}
           />
         ))}

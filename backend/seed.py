@@ -9,7 +9,7 @@ app = create_app()
 with app.app_context():
     if Ride.query.count() == 0:  # only seeds an empty database
         op = Operator(
-            name="Demo Express",
+            name="Haifa Express",
             contact_phone="+2348000000000",
             license_verified=True,
             vehicle_inspection_verified=True,

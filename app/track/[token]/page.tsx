@@ -5,28 +5,17 @@ import { useParams } from "next/navigation";
 import { BadgeCheck, ShieldCheck, TriangleAlert } from "lucide-react";
 import Logo from "@/components/Logo";
 import { DISPLAY } from "@/components/landing/styles";
-import { API_BASE } from "@/app/api/client"; // adjust if your alias differs
+import { BookingApiError } from "@/lib/bookings";
+import { getPublicTracking, type PublicTracking } from "@/lib/tracking";
 
 const POLL_MS = 15_000; // PRD: 10 to 15 seconds
 const ROUTE = "M24 118 C 90 130, 120 60, 190 80 S 290 90, 336 28";
-
-interface TrackData {
-  corper: string;
-  from: string;
-  to: string;
-  operator: string;
-  vehicle: string;
-  lastSeenAt: string | null;
-  stale: boolean;
-  progress: number | null;
-  totalMinutes: number | null;
-}
 
 type LoadState = "loading" | "ok" | "inactive" | "error";
 
 export default function TrackPage() {
   const { token } = useParams<{ token: string }>();
-  const [data, setData] = useState<TrackData | null>(null);
+  const [data, setData] = useState<PublicTracking | null>(null);
   const [state, setState] = useState<LoadState>("loading");
   const [now, setNow] = useState(() => Date.now());
   const pathRef = useRef<SVGPathElement>(null);
@@ -34,20 +23,26 @@ export default function TrackPage() {
 
   useEffect(() => {
     let cancelled = false;
+
     async function load() {
       try {
-        const res = await fetch(`${API_BASE}/tracking/${token}`);
+        const d = await getPublicTracking(token);
         if (cancelled) return;
-        if (res.status === 404 || res.status === 410) return setState("inactive");
-        if (!res.ok) return setState((s) => (s === "ok" ? s : "error"));
-        setData(await res.json());
+        setData(d);
         setState("ok");
-      } catch {
-        if (!cancelled) setState((s) => (s === "ok" ? s : "error"));
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof BookingApiError && (err.status === 404 || err.status === 410)) {
+          setState("inactive");
+        } else {
+          // keep showing the last good data if a poll fails
+          setState((s) => (s === "ok" ? s : "error"));
+        }
       } finally {
         if (!cancelled) setNow(Date.now());
       }
     }
+
     load();
     const timer = setInterval(load, POLL_MS);
     return () => {

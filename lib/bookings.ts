@@ -62,7 +62,7 @@ export type CreateBookingResponse = {
   bookingId: number;
   status: string;
   payment: {
-    checkout_url?: string;
+    checkoutUrl?: string;
     status?: string;
     [key: string]: unknown;
   };

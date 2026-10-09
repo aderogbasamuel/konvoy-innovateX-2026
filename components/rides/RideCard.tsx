@@ -2,41 +2,47 @@ import { BadgeCheck, Bus, CalendarClock, MapPin, Star, Users } from "lucide-reac
 
 import { DISPLAY } from "@/components/landing/styles";
 import { compact, naira } from "@/lib/format";
-import type { Ride } from "@/lib/rides";
+import type { TransportRide } from "@/lib/rides-api";
 
 interface RideCardProps {
-  ride: Ride;
+  ride: TransportRide;
   onBook: () => void;
   onViewSquad?: () => void;
 }
 
 export default function RideCard({ ride, onBook }: RideCardProps) {
+  const { operator, route } = ride;
+
+  const operatorName = operator?.name?.trim() || "Unknown operator";
+
   const departure = new Date(ride.departsAt);
+  const validDate = !Number.isNaN(departure.getTime());
 
-  const operator = ride.operator as unknown;
-  const operatorName =
-    typeof operator === "string"
-      ? operator
-      : typeof operator === "object" &&
-          operator !== null &&
-          "name" in operator &&
-          typeof (operator as { name?: unknown }).name === "string"
-        ? (operator as { name: string }).name
-        : "K";
+  const departureDate = validDate
+    ? departure.toLocaleDateString("en-NG", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "Africa/Lagos",
+      })
+    : "Date unavailable";
 
-  const departureDate = departure.toLocaleDateString("en-NG", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "Africa/Lagos",
-  });
+  const departureTime = validDate
+    ? departure.toLocaleTimeString("en-NG", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: "Africa/Lagos",
+      })
+    : "";
 
-  const departureTime = departure.toLocaleTimeString("en-NG", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "Africa/Lagos",
-  });
+  const hasRating = operator.ratingAvg !== null && operator.ratingCount > 0;
+
+  // Verified only when every check passes
+  const isVerified =
+    operator.verification.license &&
+    operator.verification.vehicleInspection &&
+    operator.verification.driverId;
 
   return (
     <article className="rounded-3xl bg-white p-5 text-[#10201A] shadow-[0_8px_24px_rgba(10,59,34,0.08)]">
@@ -62,12 +68,12 @@ export default function RideCard({ ride, onBook }: RideCardProps) {
               aria-hidden="true"
             />
 
-            {ride.reviews > 0 && ride.rating !== null ? (
+            {hasRating ? (
               <>
                 <span className="font-semibold text-[#10201A]">
-                  {ride.rating.toFixed(1)}
+                  {operator.ratingAvg!.toFixed(1)}
                 </span>
-                <span>({compact(ride.reviews)} reviews)</span>
+                <span>({compact(operator.ratingCount)} reviews)</span>
               </>
             ) : (
               <span>No ratings yet</span>
@@ -75,7 +81,7 @@ export default function RideCard({ ride, onBook }: RideCardProps) {
           </p>
         </div>
 
-        {ride.verified && (
+        {isVerified && (
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#DCEBDD] px-2.5 py-1 text-xs font-semibold text-[#11603A]">
             <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
             Verified
@@ -86,22 +92,19 @@ export default function RideCard({ ride, onBook }: RideCardProps) {
       {/* Route */}
       <div className="mt-5 rounded-2xl bg-[#F2F6F1] p-4">
         <div className="flex items-center gap-2 text-sm text-[#4C5F55]">
-          <MapPin className="h-4 w-4 shrink-0 text-[#11603A]" />
-          <span className="font-semibold text-[#10201A]">
-            {ride.origin}
-          </span>
+          <MapPin className="h-4 w-4 shrink-0 text-[#11603A]" aria-hidden="true" />
+          <span className="font-semibold text-[#10201A]">{route.originState}</span>
 
           <span aria-hidden="true">→</span>
 
-          <span className="font-semibold text-[#10201A]">
-            {ride.destination}
-          </span>
+          <span className="font-semibold text-[#10201A]">{route.destination}</span>
         </div>
 
         <div className="mt-3 flex items-center gap-2 text-sm text-[#4C5F55]">
-          <CalendarClock className="h-4 w-4 shrink-0 text-[#11603A]" />
+          <CalendarClock className="h-4 w-4 shrink-0 text-[#11603A]" aria-hidden="true" />
           <span>
-            {departureDate} · {departureTime}
+            {departureDate}
+            {departureTime && ` · ${departureTime}`}
           </span>
         </div>
       </div>
@@ -110,7 +113,7 @@ export default function RideCard({ ride, onBook }: RideCardProps) {
       <ul className="m-0 mt-4 grid list-none gap-2 p-0 text-sm text-[#4C5F55]">
         <li className="flex items-center gap-2">
           <Bus className="h-4 w-4 shrink-0" aria-hidden="true" />
-          {ride.vehicle}
+          {ride.vehicleType}
         </li>
 
         <li className="flex items-center gap-2">
@@ -122,21 +125,16 @@ export default function RideCard({ ride, onBook }: RideCardProps) {
       {/* Price and booking */}
       <div className="mt-5 flex items-center justify-between gap-3">
         <div>
-          <p
-            className={`${DISPLAY} m-0 text-2xl font-extrabold tracking-tight`}
-          >
+          <p className={`${DISPLAY} m-0 text-2xl font-extrabold tracking-tight`}>
             {naira(ride.price)}
           </p>
-
-          <p className="m-0 mt-0.5 text-sm text-[#4C5F55]">
-            per seat
-          </p>
+          <p className="m-0 mt-0.5 text-sm text-[#4C5F55]">per seat</p>
         </div>
 
         <button
           type="button"
           onClick={onBook}
-          aria-label={`Book a seat with ${ride.operator}`}
+          aria-label={`Book a seat with ${operatorName}`}
           className="min-h-12 shrink-0 rounded-[14px] bg-[#FFC20E] px-6 font-semibold text-[#241A00] transition hover:bg-[#FFD13F] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-[#0A3B22]"
         >
           Book now

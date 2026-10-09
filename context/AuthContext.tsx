@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -53,6 +52,15 @@ type AuthProviderProps = {
   children: ReactNode;
 };
 
+// Accepts both { user: {...} } and a flat user object.
+function extractUser(data: ApiResponse): User | null {
+  const candidate = (data?.user ?? data) as User;
+
+  return candidate && (candidate.id !== undefined || candidate.phone)
+    ? candidate
+    : null;
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,7 +91,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           );
 
           if (!cancelled) {
-            setUser(data.user ?? null);
+            console.log("/me response:", data); // remove once confirmed
+            setUser(extractUser(data));
           }
 
           return;
@@ -128,7 +137,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         );
 
         if (!cancelled) {
-          setUser(meData.user ?? null);
+          setUser(extractUser(meData));
         }
       } catch (error) {
         console.error("Session restoration failed:", error);
@@ -240,9 +249,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     );
 
-    const updatedUser = data.user ?? data;
-
-    setUser(updatedUser as User);
+    setUser((prev) => extractUser(data) ?? { ...prev, ...updatedFields });
 
     return data;
   };

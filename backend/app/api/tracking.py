@@ -1,6 +1,7 @@
 import os
 import secrets
 from datetime import timedelta
+from math import asin, cos, radians, sin, sqrt
 
 from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -8,16 +9,27 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from ..extensions import db, limiter
 from ..models.booking import STATUS_PAID, Booking  # adjust if Booking lives in another file
 from ..models.tracking import TrackingSession
-from ..utils.time import utcnow
-from . import api_bp
-from math import asin, cos, radians, sin, sqrt
-
 from ..models.transport import Ride
 from ..models.user import User
+from ..utils.time import utcnow
+from . import api_bp
 
 LINK_LIFETIME = timedelta(hours=48)
 STALE_AFTER = timedelta(minutes=2)
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://konvoyapp.vercel.app")
+
+# Approximate state-capital coordinates, for rough progress only. Add states as routes grow.
+STATE_COORDS = {
+    "lagos": (6.5244, 3.3792), "ogun": (7.1475, 3.3619), "oyo": (7.3775, 3.9470),
+    "kaduna": (10.5105, 7.4165), "abuja": (9.0765, 7.3986), "kano": (12.0022, 8.5920),
+    "rivers": (4.8156, 7.0498), "enugu": (6.4584, 7.5464),
+}
+
+
+def _km(a, b):
+    la1, lo1, la2, lo2 = map(radians, (*a, *b))
+    h = sin((la2 - la1) / 2) ** 2 + cos(la1) * cos(la2) * sin((lo2 - lo1) / 2) ** 2
+    return 2 * 6371 * asin(sqrt(h))
 
 
 def _own_paid_booking(booking_id):
@@ -99,22 +111,6 @@ def update_location(token):
 
 
 # ---- family: public, no login ----
-
-@api_bp.get("/tracking/<token>")
-@limiter.limit("60 per minute")
-# Approximate state-capital coordinates, for rough progress only. Add states as routes grow.
-STATE_COORDS = {
-    "lagos": (6.5244, 3.3792), "ogun": (7.1475, 3.3619), "oyo": (7.3775, 3.9470),
-    "kaduna": (10.5105, 7.4165), "abuja": (9.0765, 7.3986), "kano": (12.0022, 8.5920),
-    "rivers": (4.8156, 7.0498), "enugu": (6.4584, 7.5464),
-}
-
-
-def _km(a, b):
-    la1, lo1, la2, lo2 = map(radians, (*a, *b))
-    h = sin((la2 - la1) / 2) ** 2 + cos(la1) * cos(la2) * sin((lo2 - lo1) / 2) ** 2
-    return 2 * 6371 * asin(sqrt(h))
-
 
 @api_bp.get("/tracking/<token>")
 @limiter.limit("60 per minute")

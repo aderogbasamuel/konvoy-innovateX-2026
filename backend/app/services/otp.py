@@ -46,10 +46,15 @@ def issue_otp(phone: str) -> int:
     )
 
     ttl = cfg["OTP_TTL_SECONDS"]
-    code = _generate_code(cfg["OTP_LENGTH"])
+    static_code = cfg.get("OTP_STATIC_CODE")
+    code = static_code or _generate_code(cfg["OTP_LENGTH"])
     otp = OTPCode(phone=phone, code_hash=_hash(phone, code), expires_at=now + timedelta(seconds=ttl))
     db.session.add(otp)
     db.session.commit()
+
+    if static_code:
+        # Demo mode: skip the SMS provider entirely, nothing to fail.
+        return ttl
 
     try:
         get_sms_provider().send(phone, f"Your Konvoy code is {code}. It expires in {ttl // 60} minutes.")

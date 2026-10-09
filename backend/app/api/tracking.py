@@ -10,6 +10,10 @@ from ..models.booking import STATUS_PAID, Booking  # adjust if Booking lives in 
 from ..models.tracking import TrackingSession
 from ..utils.time import utcnow
 from . import api_bp
+from math import asin, cos, radians, sin, sqrt
+
+from ..models.transport import Ride
+from ..models.user import User
 
 LINK_LIFETIME = timedelta(hours=48)
 STALE_AFTER = timedelta(minutes=2)
@@ -98,17 +102,56 @@ def update_location(token):
 
 @api_bp.get("/tracking/<token>")
 @limiter.limit("60 per minute")
+# Approximate state-capital coordinates, for rough progress only. Add states as routes grow.
+STATE_COORDS = {
+    "lagos": (6.5244, 3.3792), "ogun": (7.1475, 3.3619), "oyo": (7.3775, 3.9470),
+    "kaduna": (10.5105, 7.4165), "abuja": (9.0765, 7.3986), "kano": (12.0022, 8.5920),
+    "rivers": (4.8156, 7.0498), "enugu": (6.4584, 7.5464),
+}
+
+
+def _km(a, b):
+    la1, lo1, la2, lo2 = map(radians, (*a, *b))
+    h = sin((la2 - la1) / 2) ** 2 + cos(la1) * cos(la2) * sin((lo2 - lo1) / 2) ** 2
+    return 2 * 6371 * asin(sqrt(h))
+    
+def view_tracking(token):
+@api_bp.get("/tracking/<token>")
+@limiter.limit("60 per minute")
 def view_tracking(token):
     s = TrackingSession.query.filter_by(token=token).first()
     if not s:
         return jsonify(error="Tracking link not found"), 404
     if s.revoked_at or s.expires_at <= utcnow():
         return jsonify(error="This tracking link is no longer active"), 410
+
+    b = db.session.get(Booking, s.booking_id)
+    ride = db.session.get(Ride, int(b.ride_id)) if b and str(b.ride_id).isdigit() else None
+    user = db.session.get(User, b.user_id) if b else None
+    first_name = ((user.full_name or "").split() or ["Your traveller"])[0] if user else "Your traveller"
+
+    progress = total_minutes = None
+    if ride and s.last_lat is not None:
+        origin = STATE_COORDS.get(ride.route.origin_state.strip().lower())
+        dest = STATE_COORDS.get(ride.route.destination.strip().lower())
+        if origin and dest:
+            total = _km(origin, dest)
+            if total > 0:
+                progress = max(0.0, min(1.0, 1 - _km((s.last_lat, s.last_lng), dest) / total))
+                total_minutes = round(total * 1.07)  # very rough road estimate
+
     stale = s.last_seen_at is None or (utcnow() - s.last_seen_at) > STALE_AFTER
     return jsonify({
+        "corper": first_name,  # first name only; no phone or booking id on a public page
+        "from": ride.route.origin_state if ride else "",
+        "to": ride.route.destination if ride else "",
+        "operator": ride.operator.name if ride else "",
+        "vehicle": ride.vehicle_type if ride else "",
         "lat": s.last_lat,
         "lng": s.last_lng,
         "lastSeenAt": s.last_seen_at.isoformat() + "Z" if s.last_seen_at else None,
-        "stale": stale,  # frontend shows "last known location" + timestamp
+        "stale": stale,
+        "progress": progress,
+        "totalMinutes": total_minutes,
         "expiresAt": s.expires_at.isoformat() + "Z",
     })

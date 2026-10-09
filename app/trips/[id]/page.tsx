@@ -7,7 +7,7 @@ import { Check, Copy, MapPinned, MessagesSquare, Share2, Square, Users } from "l
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { DISPLAY } from "@/components/landing/styles";
 import { formatTripDate, safeDate, naira } from "@/lib/format";
-import { getBooking } from "@/lib/booking";
+import { getBooking } from "@/lib/bookings";
 import { getRide } from "@/lib/rides-api";
 
 type Sharing = "idle" | "sharing" | "ended";

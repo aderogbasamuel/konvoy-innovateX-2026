@@ -1,19 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { DISPLAY } from "@/components/landing/styles";
 import { formatDate, naira } from "@/lib/format";
-import { TRIPS } from "@/lib/mock";
+import { getBookings } from "@/lib/bookings-api"; // adjust to your lib file name
 
 type Tab = "upcoming" | "past";
 
+type Trip = {
+  id: string;
+  from: string;
+  to: string;
+  date: string;
+  operator: string;
+  seat: string;
+  price: number;
+  status: string;
+};
+
+type Rec = Record<string, unknown>;
+
+const rec = (v: unknown): Rec =>
+  v && typeof v === "object" ? (v as Rec) : {};
+
+const str = (v: unknown, fallback = ""): string =>
+  typeof v === "string" || typeof v === "number" ? String(v) : fallback;
+
+function normalizeBooking(item: Rec): Trip {
+  const ride = rec(item.ride);
+  const route = rec(ride.route ?? item.route);
+  const operatorRaw = ride.operator ?? item.operator;
+
+  return {
+    id: str(item.bookingId ?? item.id),
+    from: str(route.originState ?? ride.origin ?? item.origin, "—"),
+    to: str(route.destination ?? ride.destination ?? item.destination, "—"),
+    date: str(ride.departsAt ?? item.departsAt ?? item.date),
+    operator:
+      typeof operatorRaw === "string"
+        ? operatorRaw
+        : str(rec(operatorRaw).name, "Operator"),
+    seat: str(item.seat ?? item.seatNumber, "—"),
+    price: Number(item.price ?? item.amount ?? ride.price ?? 0),
+    status: str(item.status),
+  };
+}
+
 export default function TripsPage() {
   const [tab, setTab] = useState<Tab>("upcoming");
-  const trips = TRIPS.filter((t) => t.status === tab);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    getBookings(tab)
+      .then((res) => {
+        if (cancelled) return;
+        console.log("bookings response:", res); // remove once the shape is confirmed
+        setTrips(res.items.map(normalizeBooking));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Unable to load trips.");
+        setTrips([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
 
   return (
     <main className="min-h-dvh bg-[#F2F6F1] pb-28 font-[family-name:var(--font-body)] text-[#10201A]">
@@ -36,31 +102,62 @@ export default function TripsPage() {
       </ScreenHeader>
 
       <div className="mx-auto -mt-10 grid max-w-md gap-4 px-5">
-        {trips.length === 0 ? (
+        {loading ? (
+          <div className="rounded-3xl bg-white p-6 text-center shadow-[0_16px_32px_rgba(10,59,34,0.14)]">
+            <p className="m-0 text-[#4C5F55]">Loading trips…</p>
+          </div>
+        ) : error ? (
+          <div className="rounded-3xl bg-white p-6 text-center shadow-[0_16px_32px_rgba(10,59,34,0.14)]">
+            <p className="m-0 font-semibold">{error}</p>
+            <button
+              type="button"
+              onClick={() => setTab((t) => t)}
+              className="mt-2 min-h-12 py-3 font-semibold text-[#11603A] underline"
+            >
+              Reload page
+            </button>
+          </div>
+        ) : trips.length === 0 ? (
           <div className="rounded-3xl bg-white p-6 text-center shadow-[0_16px_32px_rgba(10,59,34,0.14)]">
             <p className="m-0 font-semibold">No {tab} trips yet.</p>
             {tab === "upcoming" && (
-              <Link href="/home" className="mt-2 inline-block min-h-12 py-3 font-semibold text-[#11603A] underline">Find a ride</Link>
+              <Link href="/home" className="mt-2 inline-block min-h-12 py-3 font-semibold text-[#11603A] underline">
+                Find a ride
+              </Link>
             )}
           </div>
         ) : (
-          trips.map((t) => (
-            <Link
-              key={t.id}
-              href={`/trips/${t.id}`}
-              className="flex items-center gap-3 rounded-3xl bg-white p-5 shadow-[0_16px_32px_rgba(10,59,34,0.14)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#11603A]"
-            >
-              <div className="min-w-0 flex-1">
-                <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${t.status === "upcoming" ? "bg-[#DCEBDD] text-[#11603A]" : "bg-[#E4EBE4] text-[#4C5F55]"}`}>
-                  {t.status === "upcoming" ? "Confirmed" : "Completed"}
-                </span>
-                <p className={`${DISPLAY} m-0 mt-2 text-[1.2rem] font-semibold tracking-tight`}>{t.from} to {t.to}</p>
-                <p className="m-0 mt-0.5 text-sm text-[#4C5F55]">{formatDate(t.date)}</p>
-                <p className="m-0 text-sm text-[#4C5F55]">{t.operator}, seat {t.seat}, {naira(t.price)}</p>
-              </div>
-              <ChevronRight className="h-5 w-5 shrink-0 text-[#4C5F55]" aria-hidden="true" />
-            </Link>
-          ))
+          trips.map((t) => {
+            const cancelled = t.status.toLowerCase().includes("cancel");
+            const badge = cancelled ? "Cancelled" : tab === "upcoming" ? "Confirmed" : "Completed";
+            const badgeStyle = cancelled
+              ? "bg-[#F6E1DE] text-[#9B2C1F]"
+              : tab === "upcoming"
+                ? "bg-[#DCEBDD] text-[#11603A]"
+                : "bg-[#E4EBE4] text-[#4C5F55]";
+
+            return (
+              <Link
+                key={t.id}
+                href={`/trips/${t.id}`}
+                className="flex items-center gap-3 rounded-3xl bg-white p-5 shadow-[0_16px_32px_rgba(10,59,34,0.14)] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#11603A]"
+              >
+                <div className="min-w-0 flex-1">
+                  <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold ${badgeStyle}`}>
+                    {badge}
+                  </span>
+                  <p className={`${DISPLAY} m-0 mt-2 text-[1.2rem] font-semibold tracking-tight`}>
+                    {t.from} to {t.to}
+                  </p>
+                  <p className="m-0 mt-0.5 text-sm text-[#4C5F55]">{formatDate(t.date)}</p>
+                  <p className="m-0 text-sm text-[#4C5F55]">
+                    {t.operator}, seat {t.seat}, {naira(t.price)}
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 shrink-0 text-[#4C5F55]" aria-hidden="true" />
+              </Link>
+            );
+          })
         )}
       </div>
 

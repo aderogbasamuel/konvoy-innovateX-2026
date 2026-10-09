@@ -7,7 +7,7 @@ import BottomNav from "@/components/BottomNav";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { DISPLAY } from "@/components/landing/styles";
 import { formatDate, naira } from "@/lib/format";
-import { getBookings } from "@/lib/bookings-api"; // adjust to your lib file name
+import { getBookings } from "@/lib/bookings"; // adjust to your lib file name
 
 type Tab = "upcoming" | "past";
 

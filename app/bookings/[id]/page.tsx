@@ -84,7 +84,7 @@ function Book() {
   const [seat, setSeat] = useState<number | null>(null);
   const [method, setMethod] = useState<"card" | "transfer">("card");
   const [paying, setPaying] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<Error | string | null>(null);
   const idempotencyKey = useRef<string | null>(null);
 
   const capacity = ride?.seatsTotal ?? 0;
@@ -161,9 +161,9 @@ function Book() {
         idempotencyKey.current,
       );
 
-      const checkoutUrl = result.payment?.checkout_url;
+      const checkoutUrl = result.payment?.checkoutUrl;
 
-      if (!checkoutUrl) {
+      if (typeof checkoutUrl !== "string" || !checkoutUrl.trim()) {
         throw new Error("The payment checkout link was not returned.");
       }
 
@@ -296,7 +296,9 @@ function Book() {
           role="alert"
           className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800"
         >
-          {error}
+          {typeof error === "string"
+            ? error
+            : error.message || "We couldn't start your booking. Please try again."}
         </p>
       )}
       {/* pay bar */}

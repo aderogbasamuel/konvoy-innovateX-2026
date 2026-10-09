@@ -107,7 +107,7 @@ def create_booking():
             amount_naira=price,
             reference=reference,
             method=method,
-            customer_email=f"{user.phone.lstrip('+')}@konvoy.app",  # Bachs requires an email; corpers sign up by phone only
+            customer_email=f"developersamzy@gmail.com",  # Bachs requires an email; corpers sign up by phone only
             customer_phone=user.phone,
             customer_name=user.full_name,
             success_url=f"{frontend_url}/bookings/{booking.id}",

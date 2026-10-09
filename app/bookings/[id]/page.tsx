@@ -1,21 +1,15 @@
 "use client";
 
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import { createBooking, BookingApiError } from "@/lib/bookings";
+import { getRide, type Ride } from "@/lib/rides";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import {
-  BadgeCheck,
-  CreditCard,
-  Hash,
-  Landmark,
-  type LucideIcon,
-} from "lucide-react";
+import { useParams, useSearchParams } from "next/navigation";
+import { BadgeCheck, CreditCard, Landmark, Users, Bus } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { DISPLAY } from "@/components/landing/styles";
 import { formatDate, naira } from "@/lib/format";
-import { RIDES } from "@/lib/rides";
-
 type Method = "card" | "transfer";
 
 interface MethodOption {
@@ -42,39 +36,74 @@ const METHODS: MethodOption[] = [
 
 function Book() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const params = useSearchParams();
-  const ride = RIDES.find((r) => r.id === id);
 
-  const from = params.get("from") || "Lagos";
-  const to = params.get("to") || "Orientation camp";
+  const [ride, setRide] = useState<Ride | null>(null);
+  const [loadingRide, setLoadingRide] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  const from = params.get("from") || "";
+  const to = params.get("to") || "";
   const date = params.get("date") || "";
 
-  const [seat, setSeat] = useState<number | null>(null);
-  const [method, setMethod] = useState<Method>("card");
-  const [paying, setPaying] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
 
+    async function loadRide() {
+      setLoadingRide(true);
+      setLoadError("");
+
+      try {
+        const result = await getRide(id);
+
+        if (!cancelled) {
+          setRide(result);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setLoadError(
+            err instanceof Error ? err.message : "Unable to load this ride.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingRide(false);
+        }
+      }
+    }
+
+    if (id) {
+      void loadRide();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const [seat, setSeat] = useState<number | null>(null);
+  const [method, setMethod] = useState<"card" | "transfer">("card");
+  const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
   const idempotencyKey = useRef<string | null>(null);
 
-  const capacity = ride ? ride.seatsLeft + ride.booked : 0;
-  // Mock: replace with the real taken seats from your API
-  const taken = useMemo(
-    () =>
-      new Set(
-        Array.from(
-          { length: ride?.booked ?? 0 },
-          (_, i) => ((i * 7 + 3) % Math.max(capacity, 1)) + 1,
-        ),
-      ),
-    [ride, capacity],
-  );
+  const capacity = ride?.seatsTotal ?? 0;
+
+  if (loadingRide) {
+    return (
+      <main className="grid min-h-dvh place-items-center bg-[#F2F6F1] text-[#10201A]">
+        Loading ride details...
+      </main>
+    );
+  }
 
   if (!ride) {
     return (
       <main className="grid min-h-dvh place-items-center bg-[#F2F6F1] px-5 text-center text-[#10201A]">
         <div>
-          <p className="m-0 font-semibold">We could not find that ride.</p>
+          <p className="m-0 font-semibold">
+            {loadError || "We could not find that ride."}
+          </p>
           <Link
             href="/rides"
             className="mt-3 inline-block min-h-12 py-3 font-semibold text-[#11603A] underline"
@@ -90,33 +119,26 @@ function Book() {
     [1, 2, 3, 4].map((c) => r * 4 + c).filter((n) => n <= capacity),
   );
 
-  const seatButton = (n: number) => {
-    const isTaken = taken.has(n);
-    const selected = seat === n;
-    return (
-      <button
-        key={n}
-        type="button"
-        disabled={isTaken}
-        aria-pressed={selected}
-        aria-label={`Seat ${n}, ${isTaken ? "taken" : "available"}`}
-        onClick={() => {
-          setSeat(n);
-          idempotencyKey.current = null;
-        }}
-        
-        className={`h-12 rounded-xl text-sm font-semibold focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#11603A] ${
-          selected
-            ? "bg-[#0A3B22] text-[#FFC20E]"
-            : isTaken
-              ? "cursor-not-allowed bg-[#E4EBE4] text-[#8A9B90] line-through"
-              : "border-[1.5px] border-[#B7CDBB] bg-white hover:border-[#0A3B22]"
-        }`}
-      >
-        {n}
-      </button>
-    );
-  };
+  const seatButton = (n: number) => (
+    <button
+      key={n}
+      type="button"
+      aria-pressed={seat === n}
+      aria-label={`Select seat ${n}`}
+      onClick={() => {
+        setSeat(n);
+        setError("");
+        idempotencyKey.current = null;
+      }}
+      className={`h-12 rounded-xl text-sm font-semibold focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#11603A] ${
+        seat === n
+          ? "bg-[#0A3B22] text-[#FFC20E]"
+          : "border-[1.5px] border-[#B7CDBB] bg-white hover:border-[#0A3B22]"
+      }`}
+    >
+      {n}
+    </button>
+  );
 
   async function pay() {
     if (seat === null || !ride || paying) return;
@@ -189,6 +211,9 @@ function Book() {
             <h2 className={`${DISPLAY} m-0 text-[1.1rem] font-semibold`}>
               {ride.operator}
             </h2>
+            <p className="m-0 mt-1 text-sm text-[#4C5F55]">
+              {ride.origin} → {ride.destination}
+            </p>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#DCEBDD] px-2.5 py-1 text-xs font-semibold text-[#11603A]">
               <BadgeCheck className="h-3.5 w-3.5" aria-hidden="true" />
               Verified
@@ -199,6 +224,10 @@ function Book() {
             className={`${DISPLAY} m-0 mt-3 text-2xl font-extrabold tracking-tight`}
           >
             {naira(ride.price)}
+          </p>
+          <p className="m-0 mt-1 text-sm text-[#4C5F55]">
+            {ride.seatsTotal} total seats ·{" "}
+            {formatDate(ride.departsAt.slice(0, 10))}
           </p>
         </section>
 
@@ -211,7 +240,8 @@ function Book() {
             Choose a seat
           </h2>
           <p className="m-0 mt-1 text-sm text-[#4C5F55]">
-            {ride.seatsLeft} seats left. Front of the vehicle is at the top.
+            {ride.seatsTotal} total seats. Choose a seat; availability is
+            confirmed when you book.
           </p>
           <div className="mt-4 grid max-h-[340px] gap-2 overflow-y-auto pr-1">
             {rows.map((row) => (
@@ -243,9 +273,9 @@ function Book() {
                   value={key}
                   checked={method === key}
                   onChange={() => {
-  setMethod(key);
-  idempotencyKey.current = null;
-}}
+                    setMethod(key);
+                    idempotencyKey.current = null;
+                  }}
                   className="peer sr-only"
                 />
                 <span className="flex min-h-14 items-center gap-3 rounded-[14px] border-[1.5px] border-[#B7CDBB] px-4 py-2.5 peer-checked:border-[#0A3B22] peer-checked:bg-[#EAF4EC] peer-focus-visible:outline peer-focus-visible:outline-[3px] peer-focus-visible:outline-[#11603A]">

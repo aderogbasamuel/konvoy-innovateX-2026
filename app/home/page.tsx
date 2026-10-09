@@ -13,6 +13,7 @@ import { ArrowUpDown, Bell, Calendar, MapPin, ShieldCheck } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import { DISPLAY } from "@/components/landing/styles";
 import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 /* ---------- helpers ---------- */
 
 function greeting(date = new Date()) {
@@ -308,6 +309,15 @@ export default function HomePage() {
             {pending ? "Searching…" : "Search rides"}
           </button>
         </form>
+{/* Browse rides */}
+
+<Link
+  href="/rides"
+  className="mt-3 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#B7CDBB] bg-white font-semibold text-[#0A3B22] transition hover:bg-[#DCEBDD] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-[#11603A]"
+>
+  View all available rides
+  <span aria-hidden="true">→</span>
+</Link>
 
         {/* trust banner */}
         <div className="mt-6 flex items-center gap-4 rounded-3xl bg-[#DCEBDD] p-4">

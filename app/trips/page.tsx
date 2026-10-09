@@ -6,8 +6,8 @@ import { ChevronRight } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { DISPLAY } from "@/components/landing/styles";
-import { formatDate, naira } from "@/lib/format";
-import { getBookings } from "@/lib/bookings"; // adjust to your file name
+import { formatTripDate, naira } from "@/lib/format";
+import { getBookings } from "@/lib/booking";
 import { getRide, type TransportRide } from "@/lib/rides-api";
 
 type Tab = "upcoming" | "past";
@@ -170,7 +170,7 @@ export default function TripsPage() {
                     {t.from} to {t.to}
                   </p>
                   <p className="m-0 mt-0.5 text-sm text-[#4C5F55]">
-                    {formatDate(t.date)}
+                    {formatTripDate(t.date)}
                   </p>
                   <p className="m-0 text-sm text-[#4C5F55]">
                     {t.operator}, seat {t.seat}, {naira(t.price)}

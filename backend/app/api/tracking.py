@@ -114,8 +114,8 @@ def _km(a, b):
     la1, lo1, la2, lo2 = map(radians, (*a, *b))
     h = sin((la2 - la1) / 2) ** 2 + cos(la1) * cos(la2) * sin((lo2 - lo1) / 2) ** 2
     return 2 * 6371 * asin(sqrt(h))
-    
-def view_tracking(token):
+
+
 @api_bp.get("/tracking/<token>")
 @limiter.limit("60 per minute")
 def view_tracking(token):

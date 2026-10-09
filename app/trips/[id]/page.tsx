@@ -6,8 +6,8 @@ import { useParams } from "next/navigation";
 import { Check, Copy, MapPinned, MessagesSquare, Share2, Square, Users } from "lucide-react";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { DISPLAY } from "@/components/landing/styles";
-import { formatDate, naira } from "@/lib/format";
-import { getBooking } from "@/lib/bookings"; // adjust to your file name
+import { formatTripDate, safeDate, naira } from "@/lib/format";
+import { getBooking } from "@/lib/booking";
 import { getRide } from "@/lib/rides-api";
 
 type Sharing = "idle" | "sharing" | "ended";
@@ -217,13 +217,13 @@ export default function TripDetailPage() {
   }
 
   const cancelled = trip.status.toLowerCase().includes("cancel");
-  const departure = new Date(trip.date);
-  const upcoming = !cancelled && (Number.isNaN(departure.getTime()) || departure.getTime() > Date.now());
+  const departure = safeDate(trip.date);
+  const upcoming = !cancelled && (departure === null || departure.getTime() > Date.now());
   const statusLabel = cancelled ? "Cancelled" : upcoming ? "Confirmed" : "Completed";
 
   return (
     <main className="min-h-dvh bg-[#F2F6F1] pb-10 font-[family-name:var(--font-body)] text-[#10201A]">
-      <ScreenHeader title={`${trip.from} to ${trip.to}`} subtitle={formatDate(trip.date)} />
+      <ScreenHeader title={`${trip.from} to ${trip.to}`} subtitle={formatTripDate(trip.date)} />
 
       <div className="mx-auto -mt-10 grid max-w-md gap-4 px-5">
         <section aria-label="Trip details" className="rounded-3xl bg-white p-5 shadow-[0_16px_32px_rgba(10,59,34,0.14)]">

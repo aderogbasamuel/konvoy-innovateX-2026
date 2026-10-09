@@ -21,6 +21,7 @@ class Config:
 
     CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")]
     BEHIND_PROXY = os.getenv("BEHIND_PROXY", "0") == "1"
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
     # JWT
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-only-jwt-secret")
@@ -33,6 +34,11 @@ class Config:
     OTP_MAX_ATTEMPTS = 5
     OTP_RESEND_COOLDOWN_SECONDS = 60
     OTP_MAX_PER_HOUR = 5
+    # Demo mode: when set, every phone number gets this exact code instead of a
+    # random one, and no SMS is sent at all (no provider call, nothing to go
+    # wrong). Meant for a hackathon demo where you don't want delivery to be
+    # a dependency - unset this before anything resembling real users.
+    OTP_STATIC_CODE = os.getenv("OTP_STATIC_CODE") or None
 
     # SMS
     SMS_PROVIDER = os.getenv("SMS_PROVIDER", "console")
@@ -44,15 +50,6 @@ class Config:
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
     RATELIMIT_ENABLED = True
 
-    # Bachs payments (docs.bachs.io). sk_sandbox_... / sk_live_... picks the
-    # environment automatically — see app/services/bachs.py.
-    BACHS_SECRET_KEY = os.getenv("BACHS_SECRET_KEY", "")
-    
-    # Public https URL of the frontend. Bachs rejects localhost for success/cancel
-    # redirects, so this must be a real deployed URL even during local dev.
-    FRONTEND_URL = os.getenv("FRONTEND_URL", "")
-    BACHS_WEBHOOK_SECRET = os.getenv("BACHS_WEBHOOK_SECRET", "")
-
 
 class TestConfig(Config):
     TESTING = True
@@ -62,5 +59,3 @@ class TestConfig(Config):
     SMS_PROVIDER = "console"
     OTP_RESEND_COOLDOWN_SECONDS = 0
     RATELIMIT_ENABLED = False
-    BACHS_SECRET_KEY = "sk_sandbox_test"
-    BACHS_WEBHOOK_SECRET = "whsec_test"

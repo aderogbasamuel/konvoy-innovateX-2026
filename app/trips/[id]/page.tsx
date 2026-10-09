@@ -7,7 +7,8 @@ import { Check, Copy, MapPinned, MessagesSquare, Share2, Square, Users } from "l
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { DISPLAY } from "@/components/landing/styles";
 import { formatDate, naira } from "@/lib/format";
-import { TRIPS } from "@/lib/mock";
+import { getBooking } from "@/lib/bookings-api"; // adjust to your file name
+import { getRide } from "@/lib/rides-api";
 
 type Sharing = "idle" | "sharing" | "ended";
 
@@ -18,11 +19,36 @@ interface Point {
   recordedAt: string;
 }
 
+type Booking = {
+  id: number | string;
+  createdAt: string;
+  price: number;
+  rideId: string | number;
+  seat: number;
+  status: string;
+};
+
+type Trip = {
+  id: string;
+  rideId: string;
+  from: string;
+  to: string;
+  date: string;
+  operator: string;
+  seat: string;
+  price: number;
+  status: string;
+};
+
 const FLUSH_MS = 15_000;
 
 export default function TripDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const trip = TRIPS.find((t) => t.id === id);
+
+  const [trip, setTrip] = useState<Trip | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const [sharing, setSharing] = useState<Sharing>("idle");
   const [error, setError] = useState("");
@@ -34,7 +60,45 @@ export default function TripDetailPage() {
   const wakeLock = useRef<WakeLockSentinel | null>(null);
   const buffer = useRef<Point[]>([]);
 
-  const token = trip ? `${trip.rideId}-s${trip.seat}-${trip.date}` : ""; // mock, use the token from GET /bookings/{id}/tracking
+  // Load the booking, then its ride
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+
+    async function load() {
+      try {
+        const booking = (await getBooking(id)) as unknown as Booking;
+        const ride = await getRide(booking.rideId).catch(() => null);
+
+        if (cancelled) return;
+        setTrip({
+          id: String(booking.id),
+          rideId: String(booking.rideId),
+          from: ride?.route.originState ?? "—",
+          to: ride?.route.destination ?? "—",
+          date: ride?.departsAt ?? booking.createdAt,
+          operator: ride?.operator.name ?? "Operator",
+          seat: String(booking.seat),
+          price: booking.price,
+          status: booking.status,
+        });
+      } catch (err) {
+        if (cancelled) return;
+        setTrip(null);
+        setLoadError(err instanceof Error ? err.message : "Unable to load this trip.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, reloadKey]);
+
+  const token = trip ? `${trip.rideId}-s${trip.seat}-${trip.id}` : ""; // mock, use the token from GET /bookings/{id}/tracking
   useEffect(() => setLink(token ? `${window.location.origin}/track/${token}` : ""), [token]);
 
   function flush() {
@@ -68,7 +132,12 @@ export default function TripDetailPage() {
     setError("");
     watchId.current = navigator.geolocation.watchPosition(
       (pos) => {
-        buffer.current.push({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, recordedAt: new Date(pos.timestamp).toISOString() });
+        buffer.current.push({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+          recordedAt: new Date(pos.timestamp).toISOString(),
+        });
         setLastFix(pos.timestamp);
       },
       (err) =>
@@ -115,18 +184,42 @@ export default function TripDetailPage() {
     await copy();
   }
 
+  if (loading) {
+    return (
+      <main className="grid min-h-dvh place-items-center bg-[#F2F6F1] px-5 text-center text-[#10201A]">
+        <p className="m-0 text-[#4C5F55]">Loading trip…</p>
+      </main>
+    );
+  }
+
   if (!trip) {
     return (
       <main className="grid min-h-dvh place-items-center bg-[#F2F6F1] px-5 text-center text-[#10201A]">
         <div>
-          <p className="m-0 font-semibold">We could not find that trip.</p>
-          <Link href="/trips" className="mt-3 inline-block min-h-12 py-3 font-semibold text-[#11603A] underline">Back to my trips</Link>
+          <p className="m-0 font-semibold">{loadError ?? "We could not find that trip."}</p>
+          <div className="mt-3 flex items-center justify-center gap-4">
+            {loadError && (
+              <button
+                type="button"
+                onClick={() => setReloadKey((k) => k + 1)}
+                className="min-h-12 py-3 font-semibold text-[#11603A] underline"
+              >
+                Try again
+              </button>
+            )}
+            <Link href="/trips" className="inline-block min-h-12 py-3 font-semibold text-[#11603A] underline">
+              Back to my trips
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
-  const upcoming = trip.status === "upcoming";
+  const cancelled = trip.status.toLowerCase().includes("cancel");
+  const departure = new Date(trip.date);
+  const upcoming = !cancelled && (Number.isNaN(departure.getTime()) || departure.getTime() > Date.now());
+  const statusLabel = cancelled ? "Cancelled" : upcoming ? "Confirmed" : "Completed";
 
   return (
     <main className="min-h-dvh bg-[#F2F6F1] pb-10 font-[family-name:var(--font-body)] text-[#10201A]">
@@ -135,7 +228,12 @@ export default function TripDetailPage() {
       <div className="mx-auto -mt-10 grid max-w-md gap-4 px-5">
         <section aria-label="Trip details" className="rounded-3xl bg-white p-5 shadow-[0_16px_32px_rgba(10,59,34,0.14)]">
           <dl className="m-0 grid grid-cols-2 gap-3 text-sm">
-            {[["Operator", trip.operator], ["Seat", String(trip.seat)], ["Paid", naira(trip.price)], ["Status", upcoming ? "Confirmed" : "Completed"]].map(([k, v]) => (
+            {[
+              ["Operator", trip.operator],
+              ["Seat", trip.seat],
+              ["Paid", naira(trip.price)],
+              ["Status", statusLabel],
+            ].map(([k, v]) => (
               <div key={k} className="rounded-[14px] bg-[#F2F6F1] px-3.5 py-3">
                 <dt className="text-[0.8rem] text-[#4C5F55]">{k}</dt>
                 <dd className="m-0 font-semibold">{v}</dd>
@@ -166,7 +264,9 @@ export default function TripDetailPage() {
               <>
                 <p role="status" className="m-0 mt-2 inline-flex items-center gap-2 rounded-full bg-[#DCEBDD] px-3 py-1.5 text-sm font-semibold text-[#11603A]">
                   <span className="h-2 w-2 animate-pulse rounded-full bg-[#11603A] motion-reduce:animate-none" />
-                  {lastFix ? `Sharing. Last location ${new Date(lastFix).toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" })}` : "Sharing. Waiting for your first location..."}
+                  {lastFix
+                    ? `Sharing. Last location ${new Date(lastFix).toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" })}`
+                    : "Sharing. Waiting for your first location..."}
                 </p>
                 <p className="m-0 mt-2 text-sm text-[#4C5F55]">
                   Keep this page open while you travel. We keep your screen awake, because browsers can pause location when it sleeps.
@@ -178,7 +278,9 @@ export default function TripDetailPage() {
               </>
             )}
 
-            {sharing === "ended" && <p className="m-0 mt-2 text-sm text-[#4C5F55]">Sharing stopped. Your family can no longer see your location.</p>}
+            {sharing === "ended" && (
+              <p className="m-0 mt-2 text-sm text-[#4C5F55]">Sharing stopped. Your family can no longer see your location.</p>
+            )}
 
             {error && <p role="alert" className="m-0 mt-3 text-sm font-semibold text-[#9B1C12]">{error}</p>}
           </section>

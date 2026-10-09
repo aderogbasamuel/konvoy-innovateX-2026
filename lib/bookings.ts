@@ -11,17 +11,38 @@ export class BookingApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public code?: string
+    public code?: string,
   ) {
     super(message);
     this.name = "BookingApiError";
   }
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractMessage(data: any, status: number): string {
+  const m = data?.message ?? data?.error;
+
+  if (typeof m === "string") return m;
+
+  if (Array.isArray(m)) {
+    return m
+      .map((x) =>
+        typeof x === "string" ? x : (x?.message ?? JSON.stringify(x)),
+      )
+      .join(", ");
+  }
+
+  if (m && typeof m === "object") {
+    return m.message ? String(m.message) : JSON.stringify(m);
+  }
+
+  return `Request failed (${status})`;
+}
+
 async function bookingRequest<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-    
   const token = getAccessToken();
 
   if (!token) {
@@ -39,14 +60,20 @@ async function bookingRequest<T>(
 
   const data = await response.json().catch(() => ({}));
 
-  
-if (!response.ok) {
-  throw new BookingApiError(
-    data.message || data.error || `Request failed (${response.status})`,
-    response.status,
-    data.code
-  );
-}
+  if (!response.ok) {
+    console.log("API error body:", data); // remove once you've seen the shape
+
+    const code =
+      typeof data?.code === "string"
+        ? data.code
+        : (data?.error?.code ?? data?.message?.code);
+
+    throw new BookingApiError(
+      extractMessage(data, response.status),
+      response.status,
+      code,
+    );
+  }
 
   return data as T;
 }

@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import { ArrowUpDown, Bell, Calendar, MapPin, ShieldCheck } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import PanicButton from "@/components/PanicButton";
 import { DISPLAY } from "@/components/landing/styles";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -174,8 +175,8 @@ export default function HomePage() {
           </g>
         </svg>
 
-        <header className="relative mx-auto flex max-w-md items-start justify-between">
-          <div>
+        <header className="relative mx-auto flex max-w-md items-start justify-between gap-3">
+          <div className="min-w-0">
             <h1
               className={`${DISPLAY} m-0 text-[1.75rem] font-extrabold leading-tight tracking-[-0.02em]`}
               aria-live="polite"
@@ -192,14 +193,20 @@ export default function HomePage() {
             </h1>
             <p className="mt-1 text-[#8FD1A9]">Where are you heading today?</p>
           </div>
-          {/* Hook this up to your notifications screen or panel */}
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="grid h-12 w-12 place-items-center rounded-full text-[#FFC20E] hover:bg-white/10 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#FFC20E]"
-          >
-            <Bell className="h-5 w-5" fill="currentColor" aria-hidden="true" />
-          </button>
+
+          <div className="flex shrink-0 items-center gap-1">
+            {/* Press and hold opens emergency options */}
+            <PanicButton />
+
+            {/* Hook this up to your notifications screen or panel */}
+            <button
+              type="button"
+              aria-label="Notifications"
+              className="grid h-12 w-12 place-items-center rounded-full text-[#FFC20E] hover:bg-white/10 focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-[#FFC20E]"
+            >
+              <Bell className="h-5 w-5" fill="currentColor" aria-hidden="true" />
+            </button>
+          </div>
         </header>
       </div>
 
@@ -309,15 +316,15 @@ export default function HomePage() {
             {pending ? "Searching…" : "Search rides"}
           </button>
         </form>
-{/* Browse rides */}
 
-<Link
-  href="/rides"
-  className="mt-3 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#B7CDBB] bg-white font-semibold text-[#0A3B22] transition hover:bg-[#DCEBDD] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-[#11603A]"
->
-  View all available rides
-  <span aria-hidden="true">→</span>
-</Link>
+        {/* Browse rides */}
+        <Link
+          href="/rides"
+          className="mt-3 flex min-h-[52px] w-full items-center justify-center gap-2 rounded-[14px] border-[1.5px] border-[#B7CDBB] bg-white font-semibold text-[#0A3B22] transition hover:bg-[#DCEBDD] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-[3px] focus-visible:outline-[#11603A]"
+        >
+          View all available rides
+          <span aria-hidden="true">→</span>
+        </Link>
 
         {/* trust banner */}
         <div className="mt-6 flex items-center gap-4 rounded-3xl bg-[#DCEBDD] p-4">

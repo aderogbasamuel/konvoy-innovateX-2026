@@ -20,8 +20,8 @@ GROUP_PREFIX = "https://chat.whatsapp.com/"
 
 
 def _wa_url(number: str, text: str) -> str:
-    return f"https://wa.me/{re.sub(r'\D', '', number)}?text={quote(text)}"
-
+    digits = re.sub(r"\D", "", number)
+    return f"https://wa.me/{digits}?text={quote(text)}"
 
 def _buddy_json(b: Buddy) -> dict:
     first = ((b.user.full_name or "").split() or ["A corper"])[0]

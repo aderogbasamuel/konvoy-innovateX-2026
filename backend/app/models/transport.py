@@ -48,3 +48,4 @@ class Ride(db.Model):
 
     operator = db.relationship("Operator", back_populates="rides")
     route = db.relationship("Route", back_populates="rides")
+    whatsapp_group_url = db.Column(db.String(255))

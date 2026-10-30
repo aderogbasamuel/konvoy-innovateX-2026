@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -6,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ScreenHeader from "@/components/ui/ScreenHeader";
 import { useAuth } from "@/context/AuthContext";
+import TestCodeHint from "@/components/TestCodeHint";
+
 
 type Step = "phone" | "code" | "name";
 
@@ -214,10 +215,18 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
 
           {step === "code" && (
             <form onSubmit={verify} noValidate>
-              <label className="grid gap-1.5 text-sm font-semibold">
-                6-digit code
+              <div className="grid gap-1.5">
+                {/* Label and hint sit side by side; the hint is a separate button so it is not nested in the label */}
+                <div className="flex items-center justify-between">
+                  <label htmlFor="otp-code" className="text-sm font-semibold">
+                    6-digit code
+                  </label>
+                  {/* Testing only: remove when real SMS codes go live */}
+                  <TestCodeHint code="123456" />
+                </div>
 
                 <input
+                  id="otp-code"
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
@@ -231,7 +240,7 @@ export default function PhoneAuth({ mode }: PhoneAuthProps) {
                   className={`${input} text-center text-2xl font-semibold tracking-[0.4em]`}
                   disabled={loading}
                 />
-              </label>
+              </div>
 
               {error && (
                 <p role="alert" className="m-0 mt-2 text-sm font-semibold text-[#9B1C12]">

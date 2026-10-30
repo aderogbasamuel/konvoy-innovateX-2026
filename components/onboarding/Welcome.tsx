@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type KeyboardEvent, type TouchEvent } from "react";
 import Logo from "@/components/Logo";
 import { DISPLAY } from "@/components/landing/styles";
-import { buttonPrimary, buttonSecondary } from "@/components/ui/buttons";
+import { buttonPrimary } from "@/components/ui/buttons";
 
 interface Slide {
   title: string;
@@ -51,6 +51,13 @@ const stacked = "[grid-area:1/1] transition-opacity duration-300 motion-reduce:t
 
 const clamp = (i: number) => Math.min(slides.length - 1, Math.max(0, i));
 
+/*
+ * Layout
+ * - Mobile (< md): one centred column, in order: logo, text, image, dots, buttons.
+ * - md and up: two columns. Logo on top, text + dots + buttons stacked and vertically
+ *   centred on the left, the image on the right. The two 1fr rows around the text
+ *   block are what centre it.
+ */
 export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: WelcomeProps) {
   const router = useRouter();
   const [active, setActive] = useState(() => clamp(initialSlide));
@@ -81,14 +88,15 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
   return (
     <main
       onKeyDown={handleKeyDown}
-      className="mx-auto flex h-dvh w-full max-w-md flex-col items-center bg-[#F2F6F1] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[#10201A]"
+      className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center bg-[#F2F6F1] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[#10201A] md:grid md:max-w-5xl md:grid-cols-2 md:grid-rows-[auto_1fr_auto_auto_auto_1fr] md:items-center md:gap-x-12 md:px-10 md:text-left lg:gap-x-20 lg:px-12"
     >
-      <div className=" mt-4 sm:mt-6 flex justify-center">
+      <div className="mt-4 flex justify-center sm:mt-6 md:col-span-2 md:row-start-1 md:mt-2 md:justify-self-start">
         <Logo />
       </div>
 
+      {/* On md+ this wrapper disappears (display: contents) so its children join the page grid */}
       <div
-        className="flex w-full flex-1 touch-pan-y flex-col"
+        className="flex w-full flex-1 touch-pan-y flex-col md:contents"
         onTouchStart={(e) => (touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY })}
         onTouchEnd={handleTouchEnd}
       >
@@ -97,7 +105,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
           {`Slide ${active + 1} of ${slides.length}: ${slides[active].title.replace("\n", " ")}`}
         </p>
 
-        <div className="mt-4 grid px-6">
+        <div className="mt-4 grid px-6 md:col-start-1 md:row-start-3 md:mt-0 md:px-0">
           {slides.map((s, i) => {
             const Title = i === active ? "h1" : "div"; // one h1 in the accessibility tree
             return (
@@ -107,35 +115,41 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
                 className={`${stacked} ${i === active ? "opacity-100" : "pointer-events-none opacity-0"}`}
               >
                 <Title
-                  className={`${DISPLAY} m-0 whitespace-pre-line text-[clamp(1.9rem,8.5vw,2.4rem)] font-extrabold leading-[1.1] tracking-[-0.02em]`}
+                  className={`${DISPLAY} m-0 whitespace-pre-line text-[clamp(1.9rem,8.5vw,2.4rem)] font-extrabold leading-[1.1] tracking-[-0.02em] md:text-5xl lg:text-6xl`}
                 >
                   {s.title}
                 </Title>
-                <p className="mx-auto mt-3 max-w-[32ch] text-sm leading-snug text-[#4C5F55]">{s.text}</p>
+                <p className="mx-auto mt-3 max-w-[32ch] text-sm leading-snug text-[#4C5F55] md:mx-0 md:mt-5 md:max-w-[36ch] md:text-lg md:leading-relaxed">
+                  {s.text}
+                </p>
               </div>
             );
           })}
         </div>
 
-        {/* Full-width scene, sits at the bottom like the design */}
-        <div className="grid flex-1 items-end justify-items-center">
+        {/* Scene: bottom of the column on mobile, right-hand column on md+ */}
+        <div className="grid flex-1 items-end justify-items-center md:col-start-2 md:row-span-5 md:row-start-2 md:items-center">
           {slides.map((s, i) => (
             <Image
               key={s.image}
               src={s.image}
               width={600}
               height={600}
-              sizes="(max-width: 448px) 100vw, 448px"
+              sizes="(max-width: 767px) 100vw, 50vw"
               alt={i === active ? s.alt : ""}
               aria-hidden={i !== active}
               priority={i === 0}
-              className={`${stacked} h-auto max-h-[44vh] w-full object-contain ${i === active ? "opacity-100" : "opacity-0"}`}
+              className={`${stacked} h-auto max-h-[44vh] w-full object-contain md:max-h-[70vh] ${i === active ? "opacity-100" : "opacity-0"}`}
             />
           ))}
         </div>
       </div>
 
-      <div className="mb-5 flex justify-center gap-1" role="group" aria-label="Onboarding slides">
+      <div
+        className="mb-5 flex justify-center gap-1 md:col-start-1 md:row-start-4 md:mb-0 md:mt-8 md:justify-start"
+        role="group"
+        aria-label="Onboarding slides"
+      >
         {slides.map((s, i) => (
           <button
             key={s.image}
@@ -154,7 +168,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
         ))}
       </div>
 
-      <div className="w-full px-6">
+      <div className="w-full px-6 md:col-start-1 md:row-start-5 md:mt-6 md:max-w-sm md:px-0">
         <button
           type="button"
           onClick={onGetStarted ?? (() => router.push("/signup"))}
@@ -165,7 +179,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
         <button
           type="button"
           onClick={onSignIn ?? (() => router.push("/signin"))}
-          className="mt-2 underline text-sm text-[#0A3B22] hover:text-[#11603A] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-[#11603A] font-medium"
+          className={`mt-2 text-sm font-medium text-[#0A3B22] underline hover:text-[#11603A] md:mt-4 md:text-base ${focusRing}`}
         >
           I already have an account
         </button>

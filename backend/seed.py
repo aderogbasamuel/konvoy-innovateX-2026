@@ -16,13 +16,13 @@ SEED = [
     },
     {
         "operator": "ABC Transport",
-        "origin": "Abuja",
-        "destination": "Port Harcourt",
+        "origin": "Lagos",
+        "destination": "Sokoto",
         "departs_at": datetime(2026, 11, 15, 7, 0),
     },
     {
         "operator": "GIG Transport",
-        "origin": "Ibadan",
+        "origin": "Lagos",
         "destination": "Enugu",
         "departs_at": datetime(2026, 11, 16, 7, 0),
     },

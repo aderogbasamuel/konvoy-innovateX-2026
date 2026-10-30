@@ -6,27 +6,24 @@ from app.models.transport import Operator, Ride, Route
 PHONE = "+2348034670275"
 OLD_NAME = "Demo Express"  # the name from the first seed run (renamed to Haifa Express)
 
-# One entry per ride: operator, route, plate number, departure time
+# One entry per ride: operator, route, departure time
 SEED = [
     {
         "operator": "Haifa Express",
         "origin": "Lagos",
         "destination": "Kaduna",
-        "plate_number": "LSR-482-KJ",
         "departs_at": datetime(2026, 11, 14, 7, 0),
     },
     {
         "operator": "ABC Transport",
         "origin": "Abuja",
         "destination": "Port Harcourt",
-        "plate_number": "ABC-215-XA",
         "departs_at": datetime(2026, 11, 15, 7, 0),
     },
     {
         "operator": "GIG Transport",
         "origin": "Ibadan",
         "destination": "Enugu",
-        "plate_number": "GGE-730-LA",
         "departs_at": datetime(2026, 11, 16, 7, 0),
     },
 ]
@@ -60,12 +57,20 @@ with app.app_context():
             db.session.add(route)
             db.session.flush()
 
-        # 3. Ride: only add it if this operator has none yet
-        if Ride.query.filter_by(operator_id=op.id).count() == 0:
+        # 3. Ride: keep the one that matches, remove this operator's old rides, add if missing.
+        #    Safe to run on every deploy: once the right ride exists, nothing changes.
+        keep = None
+        for ride in Ride.query.filter_by(operator_id=op.id).all():
+            if ride.route_id == route.id and ride.departs_at == item["departs_at"]:
+                keep = ride
+            else:
+                db.session.delete(ride)
+        db.session.flush()
+
+        if keep is None:
             db.session.add(Ride(
                 operator_id=op.id, route_id=route.id,
                 departs_at=item["departs_at"],
-                
                 price=25000, vehicle_type="Toyota Sienna", seats_total=7,
             ))
             print(f"Seeded ride for {name}: {item['origin']} -> {item['destination']}")

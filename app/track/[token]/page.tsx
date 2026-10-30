@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { BadgeCheck, ShieldCheck, TriangleAlert } from "lucide-react";
 import Logo from "@/components/Logo";
@@ -8,8 +9,13 @@ import { DISPLAY } from "@/components/landing/styles";
 import { BookingApiError } from "@/lib/bookings";
 import { getPublicTracking, type PublicTracking } from "@/lib/tracking";
 
+// Leaflet touches `window`, so it must only load in the browser.
+const TrackMap = dynamic(() => import("@/components/TrackMap"), {
+  ssr: false,
+  loading: () => <div className="mt-4 h-72 w-full animate-pulse rounded-2xl bg-[#E6EEE6] motion-reduce:animate-none" />,
+});
+
 const POLL_MS = 15_000; // PRD: 10 to 15 seconds
-const ROUTE = "M24 118 C 90 130, 120 60, 190 80 S 290 90, 336 28";
 
 type LoadState = "loading" | "ok" | "inactive" | "error";
 
@@ -18,8 +24,6 @@ export default function TrackPage() {
   const [data, setData] = useState<PublicTracking | null>(null);
   const [state, setState] = useState<LoadState>("loading");
   const [now, setNow] = useState(() => Date.now());
-  const pathRef = useRef<SVGPathElement>(null);
-  const [marker, setMarker] = useState({ x: 24, y: 118, done: 0 });
 
   useEffect(() => {
     let cancelled = false;
@@ -51,15 +55,6 @@ export default function TrackPage() {
     };
   }, [token]);
 
-  const progress = data?.progress ?? 0;
-  useEffect(() => {
-    const path = pathRef.current;
-    if (!path) return;
-    const len = path.getTotalLength();
-    const p = path.getPointAtLength(len * progress);
-    setMarker({ x: p.x, y: p.y, done: len * progress });
-  }, [progress, state]);
-
   if (state === "loading") {
     return <main role="status" className="grid min-h-dvh place-items-center bg-[#F2F6F1] text-[#4C5F55]">Loading trip...</main>;
   }
@@ -75,6 +70,7 @@ export default function TrackPage() {
     );
   }
 
+  const progress = data.progress ?? 0;
   const hasFix = data.lastSeenAt !== null;
   const stale = data.stale;
   const arrived = data.progress !== null && data.progress >= 1;
@@ -85,6 +81,12 @@ export default function TrackPage() {
       ? new Date(now + (1 - data.progress) * data.totalMinutes * 60_000).toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" })
       : null;
   const status = arrived ? "Arrived" : !hasFix ? "Waiting" : stale ? "Weak signal" : "Live trip";
+
+  // Real coordinates from the API (see the PublicTracking additions in the notes).
+const position =
+  hasFix && data.lat !== null && data.lng !== null
+    ? { lat: data.lat, lng: data.lng }
+    : null;
 
   return (
     <main className="min-h-dvh bg-[#F2F6F1] px-5 pb-10 pt-[max(1.25rem,env(safe-area-inset-top))] font-[family-name:var(--font-body)] text-[#10201A]">
@@ -115,20 +117,18 @@ export default function TrackPage() {
             </p>
           )}
 
-          <svg viewBox="0 0 360 150" role="img" aria-label={`Route from ${data.from} to ${data.to}, ${Math.round(progress * 100)} percent complete`} className="mt-4 block h-auto w-full">
-            <path ref={pathRef} d={ROUTE} fill="none" stroke="#C9D9CC" strokeWidth="6" strokeLinecap="round" strokeDasharray="2 12" />
-            <path d={ROUTE} fill="none" stroke="#11603A" strokeWidth="6" strokeLinecap="round" strokeDasharray={`${marker.done} 1000`} />
-            <circle cx="24" cy="118" r="8" fill="#11603A" />
-            <circle cx="336" cy="28" r="8" fill="#fff" stroke="#11603A" strokeWidth="4" />
-            {hasFix && !stale && !arrived && (
-              <circle cx={marker.x} cy={marker.y} r="16" fill="#FFC20E" opacity=".35">
-                <animate attributeName="r" values="12;20;12" dur="2.4s" repeatCount="indefinite" />
-              </circle>
-            )}
-            <circle cx={marker.x} cy={marker.y} r="9" fill={stale ? "#fff" : "#FFC20E"} stroke="#241A00" strokeWidth="2.5" strokeDasharray={stale ? "3 3" : undefined} />
-            <text x="24" y="142" fontSize="12" fill="#4C5F55">{data.from}</text>
-            <text x="296" y="16" fontSize="12" fill="#4C5F55">Camp</text>
-          </svg>
+          {data.origin && data.destination && (
+  <TrackMap
+    origin={data.origin}
+    destination={data.destination}
+    position={position}
+    stale={stale}
+    arrived={arrived}
+    fromLabel={data.from}
+    toLabel="Camp"
+    ariaLabel={`Map of the route from ${data.from} to ${data.to}, ${Math.round(progress * 100)} percent complete`}
+  />
+)}
 
           <div className="mt-3 flex items-center gap-2 rounded-[14px] bg-[#F2F6F1] px-3.5 py-3 text-sm">
             <BadgeCheck className="h-4 w-4 shrink-0 text-[#11603A]" aria-hidden="true" />

@@ -126,15 +126,18 @@ def view_tracking(token):
     user = db.session.get(User, b.user_id) if b else None
     first_name = ((user.full_name or "").split() or ["Your traveller"])[0] if user else "Your traveller"
 
-    progress = total_minutes = None
-    if ride and s.last_lat is not None:
+    # Start and end points of the route (None if the state isn't in STATE_COORDS yet)
+    origin = dest = None
+    if ride:
         origin = STATE_COORDS.get(ride.route.origin_state.strip().lower())
         dest = STATE_COORDS.get(ride.route.destination.strip().lower())
-        if origin and dest:
-            total = _km(origin, dest)
-            if total > 0:
-                progress = max(0.0, min(1.0, 1 - _km((s.last_lat, s.last_lng), dest) / total))
-                total_minutes = round(total * 1.07)  # very rough road estimate
+
+    progress = total_minutes = None
+    if s.last_lat is not None and origin and dest:
+        total = _km(origin, dest)
+        if total > 0:
+            progress = max(0.0, min(1.0, 1 - _km((s.last_lat, s.last_lng), dest) / total))
+            total_minutes = round(total * 1.07)  # very rough road estimate
 
     stale = s.last_seen_at is None or (utcnow() - s.last_seen_at) > STALE_AFTER
     return jsonify({
@@ -145,6 +148,8 @@ def view_tracking(token):
         "vehicle": ride.vehicle_type if ride else "",
         "lat": s.last_lat,
         "lng": s.last_lng,
+        "origin": {"lat": origin[0], "lng": origin[1]} if origin else None,
+        "destination": {"lat": dest[0], "lng": dest[1]} if dest else None,
         "lastSeenAt": s.last_seen_at.isoformat() + "Z" if s.last_seen_at else None,
         "stale": stale,
         "progress": progress,

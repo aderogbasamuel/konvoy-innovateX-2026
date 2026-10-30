@@ -76,6 +76,8 @@ export type PublicTracking = {
   progress: number | null; // 0 to 1
   totalMinutes: number | null;
   expiresAt: string;
+  origin: LocationPoint | null;
+destination: LocationPoint | null;
 };
 
 /* ---------- Corper (needs login) ---------- */

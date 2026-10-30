@@ -1,7 +1,7 @@
 // Client for the Flask backend.
 // Set NEXT_PUBLIC_API_URL (see .env.example) to the API base URL including its blueprint prefix.
 
-const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api").replace(/\/$/, "");
+const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "https://konvoy-innovatex-2026-1.onrender.com/api").replace(/\/$/, "");
 const TOKEN_KEY = "konvoy_access_token"; // TODO: save the JWT here after OTP verification
 
 export function getAccessToken(): string | null {

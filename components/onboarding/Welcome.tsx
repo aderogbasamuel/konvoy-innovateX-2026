@@ -88,7 +88,7 @@ export default function Welcome({ onGetStarted, onSignIn, initialSlide = 0 }: We
   return (
     <main
       onKeyDown={handleKeyDown}
-      className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center bg-[#F2F6F1] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[#10201A] md:grid md:max-w-5xl md:grid-cols-2 md:grid-rows-[auto_1fr_auto_auto_auto_1fr] md:items-center md:gap-x-12 md:px-10 md:text-left lg:gap-x-20 lg:px-12"
+      className="mx-auto flex min-h-dvh w-full w-full flex-col items-center bg-[#F2F6F1] pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center text-[#10201A] md:grid  md:grid-cols-2 md:grid-rows-[auto_1fr_auto_auto_auto_1fr] md:items-center md:gap-x-12 md:px-10 md:text-left lg:gap-x-20 lg:px-12"
     >
       <div className="mt-4 flex justify-center sm:mt-6 md:col-span-2 md:row-start-1 md:mt-2 md:justify-self-start">
         <Logo />

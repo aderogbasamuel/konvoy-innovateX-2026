@@ -193,7 +193,7 @@ export default function HomePage() {
             <p className="mt-1 text-[#8FD1A9]">Where are you heading today?</p>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1 flex-col-reverse sm:flex-row">
             {/* Press and hold opens emergency options */}
             <PanicButton />
 

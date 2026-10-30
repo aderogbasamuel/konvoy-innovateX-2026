@@ -54,6 +54,12 @@ function isUpcoming(t: Trip) {
   return !cancelled && (departure === null || departure.getTime() > Date.now());
 }
 
+// Tracking depends on the booking being paid (the backend enforces the same rule),
+// not on the departure being in the future: sharing starts when the trip starts.
+function canTrack(t: Trip) {
+  return t.status.toLowerCase() === "paid";
+}
+
 export default function TripDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -119,7 +125,7 @@ export default function TripDetailPage() {
 
   // Get the real family tracking link (returns the existing one if active)
   useEffect(() => {
-    if (!trip || !isUpcoming(trip)) return;
+    if (!trip || !canTrack(trip)) return;
     let cancelled = false;
     setLinkError("");
 
@@ -275,7 +281,15 @@ export default function TripDetailPage() {
 
   const cancelled = trip.status.toLowerCase().includes("cancel");
   const upcoming = isUpcoming(trip);
-  const statusLabel = cancelled ? "Cancelled" : upcoming ? "Confirmed" : "Completed";
+  const trackable = canTrack(trip);
+
+  const statusLabel = cancelled
+    ? "Cancelled"
+    : trackable
+      ? "Paid"
+      : upcoming
+        ? "Confirmed"
+        : "Completed";
 
   return (
     <main className="min-h-dvh bg-[#F2F6F1] pb-10 font-[family-name:var(--font-body)] text-[#10201A]">
@@ -298,7 +312,7 @@ export default function TripDetailPage() {
           </dl>
         </section>
 
-        {upcoming && (
+        {trackable && (
           <section aria-label="Share your trip live" className="rounded-3xl bg-white p-5">
             <h2 className={`${DISPLAY} m-0 flex items-center gap-2 text-[1.1rem] font-semibold`}>
               <MapPinned className="h-5 w-5 text-[#11603A]" aria-hidden="true" />
@@ -347,7 +361,7 @@ export default function TripDetailPage() {
           </section>
         )}
 
-        {upcoming && sharing !== "ended" && (
+        {trackable && sharing !== "ended" && (
           <section aria-label="Share tracking link" className="rounded-3xl bg-white p-5">
             <h2 className={`${DISPLAY} m-0 text-[1.1rem] font-semibold`}>Family tracking link</h2>
 

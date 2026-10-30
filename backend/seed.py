@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-
 from app import create_app
 from app.extensions import db
 from app.models.transport import Operator, Ride, Route
@@ -9,7 +8,6 @@ NEW_PHONE = "+2348034670275"
 OLD_NAME = "Demo Express"  # the name from the first seed run
 
 app = create_app()
-
 with app.app_context():
     # 1. Operator: reuse the existing one (renaming it) or create it
     op = (
@@ -36,11 +34,14 @@ with app.app_context():
 
     # 3. Rides: only add them if this operator has none yet
     if Ride.query.filter_by(operator_id=op.id).count() == 0:
-        base = datetime.utcnow().replace(hour=7, minute=0, second=0, microsecond=0)
-        for days in (7, 8, 9):
+        for departure in (
+            datetime(2026, 11, 14, 7, 0),
+            datetime(2026, 11, 15, 7, 0),
+            datetime(2026, 11, 16, 7, 0),
+        ):
             db.session.add(Ride(
                 operator_id=op.id, route_id=route.id,
-                departs_at=base + timedelta(days=days),
+                departs_at=departure,
                 price=25000, vehicle_type="Toyota Sienna", seats_total=7,
             ))
         print("Seeded demo rides")

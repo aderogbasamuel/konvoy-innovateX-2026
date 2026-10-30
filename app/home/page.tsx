@@ -81,7 +81,6 @@ interface RowProps {
   icon: ReactNode;
   label: string;
   children: ReactNode;
-  /** Sits on the divider below this row. Kept outside the <label> so it doesn't become part of the field's name. */
   action?: ReactNode;
 }
 
@@ -116,7 +115,7 @@ export default function HomePage() {
   const placesId = useId();
   const { user, loading } = useAuth();
 
-  const name = user?.full_name?.trim().split(/\s+/)[0] || "Traveler"; // replace with the signed-in user's first name
+  const name = user?.full_name?.trim().split(/\s+/)[0] || "Traveler"; 
 
   // These depend on the device clock, so set them after mount to avoid a hydration mismatch
   const [hello, setHello] = useState("Hello");

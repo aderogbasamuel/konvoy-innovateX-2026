@@ -110,8 +110,9 @@ def create_booking():
             customer_email=f"developersamzy@gmail.com",  # Bachs requires an email; corpers sign up by phone only
             customer_phone=user.phone,
             customer_name=user.full_name,
-            success_url=f"{frontend_url}/bookings/{booking.id}",
+            success_url=f"{frontend_url}/bookings/{booking.id}/confirmed",
             cancel_url=f"{frontend_url}/book/{ride_id}",
+
             idempotency_key=reference,
         )
     except BachsError as exc:

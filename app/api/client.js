@@ -1,5 +1,5 @@
 export const API_BASE =
-  import.meta.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://konvoy-innovatex-2026-1.onrender.com/api";
 
 export const ENDPOINTS = {
@@ -8,8 +8,8 @@ export const ENDPOINTS = {
   refresh: (base) => `${base}/auth/refresh`,
   getUser: (base) => `${base}/auth/me`,
   updateUser: (base) => `${base}/auth/me`,
-
 };
+
 export async function request(url, options = {}) {
   const res = await fetch(url, {
     ...options,
@@ -26,7 +26,14 @@ export async function request(url, options = {}) {
   } catch (_) {}
 
   if (!res.ok) {
-    throw new Error(data?.message || `Request failed (${res.status})`);
+    const raw = data?.error?.message ?? data?.message ?? data?.error;
+    const message =
+      typeof raw === "string" ? raw : `Request failed (${res.status})`;
+
+    const err = new Error(message);
+    err.status = res.status;
+    err.code = data?.error?.code ?? data?.code;
+    throw err;
   }
 
   return data;

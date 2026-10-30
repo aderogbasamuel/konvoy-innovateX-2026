@@ -22,6 +22,9 @@ class Config:
     CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")]
     BEHIND_PROXY = os.getenv("BEHIND_PROXY", "0") == "1"
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    # Payments (Bachs)
+    BACHS_SECRET_KEY = os.getenv("BACHS_SECRET_KEY")
+    BACHS_WEBHOOK_SECRET = os.getenv("BACHS_WEBHOOK_SECRET")
 
     # JWT
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-only-jwt-secret")

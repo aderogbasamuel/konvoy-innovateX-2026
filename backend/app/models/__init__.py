@@ -4,5 +4,5 @@ from .payment import Payment
 from .user import User
 from .transport import Operator, Ride, Route  # noqa: F401
 from .tracking import TrackingSession  # noqa: F401
-
+from .buddy import Buddy  # noqa: F401
 __all__ = ["Booking", "OTPCode", "Payment", "User"]

@@ -65,7 +65,7 @@ with app.app_context():
             db.session.add(Ride(
                 operator_id=op.id, route_id=route.id,
                 departs_at=item["departs_at"],
-                plate_number=item["plate_number"],
+                
                 price=25000, vehicle_type="Toyota Sienna", seats_total=7,
             ))
             print(f"Seeded ride for {name}: {item['origin']} -> {item['destination']}")
